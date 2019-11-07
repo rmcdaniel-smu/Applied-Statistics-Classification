@@ -56,7 +56,19 @@ range(df$loc_x)
 range(df$loc_y)
 range(df$lon)
 
-ggplot(shotsTaken, aes(x=loc_x, y=loc_y)) + 
+ggplot(df, aes(x=loc_x, y=loc_y)) + 
   geom_point(aes(colour = df$shot_type)) +
   theme(panel.background = element_rect(fill = 'ivory1'))
 
+##############################################################################checking proportions assumption of binomial normality
+madeShotCNT <- nrow(df[which(df$shot_made_flag=="1"),])
+allShotCNT <- nrow(df)
+proportionMade <- madeShotCNT/allShotCNT
+proportionMissed <- 1-proportionMade
+
+varianceProportion <- (proportionMade*proportionMissed)/nrow(df)
+stdDevProportion <- sqrt(varianceProportion)
+lowerConfidence <- proportionMade + 1.96 * stdDevProportion
+upperConfidence <- proportionMade - 1.96 * stdDevProportion
+nrow(df) * lowerConfidence # this is greater than 5. Therefore, there is a normal approximation of the binomial distribution
+nrow(df) * upperConfidence # this is greater than 5. Therefore, there is a normal approximation of the binomial distribution
