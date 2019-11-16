@@ -39,7 +39,7 @@ ggplot(kobe, aes(x = lat, y = lon, color = shot_type))+
   geom_point()
 
 #loc_x and loc_y
-plot_ly(data = kobe,x = ~loc_x, y = ~loc_y, color = ~shot_type)
+plot_ly(data = kobe,x = ~loc_x, y = ~loc_y)
 
 threepoint =kobe %>% filter(shot_type == "3PT Field Goal")#(0,0) is a 2 point
 plot_ly(data = threepoint,x = ~loc_x, y = ~loc_y)
