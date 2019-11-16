@@ -6,12 +6,13 @@ dfKobe <- dfKobe[order(dfKobe$shot_made_flag),]
 
 #shot_made_flag = recId, game_event_id, game_id, lat, loc_x, loc_y, lon, minutes_remaining, period, playoffs, season, seconds_remaining, shot_distance, team_id, game_date, shot_id, attendance, arena_temp, avgnoisedb
 dfKobe <- dfKobe %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.factor, as.character)
+df[which(df$loc_y > 300),17] <- "3PT Field Goal"
+dfKobe$shot_type <- ifelse(dfKobe$shot_type=="2PT Field Goal", 2, 3)
 str(dfKobe)
 
 dfKobe.numeric <- dfKobe  %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.factor, as.character) %>% 
-  subset(select=-c(action_type, combined_shot_type, season, shot_type, shot_zone_area, shot_zone_basic, shot_zone_range, team_name, matchup, opponent, team_id))
+  subset(select=-c(action_type, combined_shot_type, season, shot_zone_area, shot_zone_basic, shot_zone_range, team_name, matchup, opponent, team_id))
 str(dfKobe.numeric)
-
 
 corrplot::corrplot(cor(dfKobe.numeric)
          , title = "Correlation of Predictor Variables, Before Variable Elimination"
