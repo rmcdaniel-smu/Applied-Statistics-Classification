@@ -41,4 +41,4 @@ plot_ly(data = threepoint,x = ~loc_x, y = ~loc_y)
 #High multicolinearity/redundant items: matchup, game_event_id, game_id, lat, lon, combined_shot_type, shot_zone_range
 
 kobe_clean = kobe_clean %>%
-  select(-team_id,-team_name,-matchup,-game_event_id,-game_id,-lat,-lon, - combined_shot_type, shot_zone_range)
+  select(-team_id,-team_name,-matchup,-game_event_id,-game_id,-lat,-lon, - combined_shot_type, -shot_zone_range)
