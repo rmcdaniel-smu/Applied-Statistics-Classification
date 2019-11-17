@@ -18,6 +18,7 @@ numericVars = kobe %>% keep(is.numeric)
 #Create Correlation matirx
 corValues = cor(numericVars)
 corrplot(corValues, method = "number", order = "alphabet")
+options(scipen = 999)
 
 #Create Sorted List of Correlation Values
 corList = as.data.frame(as.table(corValues))
