@@ -1,5 +1,5 @@
 library(pacman)
-p_load(ggplot2, dplyr)
+p_load(ggplot2, dplyr, purrr)
 
 df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F)
 
@@ -11,6 +11,67 @@ na_count <- sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 df <- df %>% mutate_if(is.integer, as.numeric) %>% data.frame()
 
 str(df)
+
+
+df <- df %>% subset(select=-c(team_id, team_name, action_type, combined_shot_type, season, shot_zone_area, shot_zone_basic, shot_zone_range, matchup))
+df.numeric <- df %>% keep(is.numeric)
+corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
+                   , title = "Correlation of Predictor Variables, Before Variable Elimination"
+                   , type = "lower"
+                   , tl.pos = "ld"
+                   , method = "square"
+                   , tl.cex = 0.65
+                   , tl.col = 'red'
+                   , order = "alphabet"
+                   , diag = F
+                   , mar=c(0,0,5,0)
+                   , bg="ivory1"
+                   ,tl.srt=.05
+)
+
+
+
+location_x_df <- df %>% 
+  group_by(shot_type) %>% 
+  summarise(min_loc_x = min(range(loc_x)), max_loc_x = max(range(loc_x))) %>% data.frame()
+
+location_y_df <- df %>% 
+  group_by(shot_type) %>% 
+  summarise(min_loc_y = min(range(loc_y)), max_loc_y = max(range(loc_y))) %>% data.frame()
+
+
+df[which(df$loc_y > 300),17] <- "3PT Field Goal"
+df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3) # make sure all 2PT scores were actually two points
+
+
+
+df %>% 
+  group_by(shot_type) %>% 
+  summarise(min_loc_x = min(range(loc_x)), max_loc_x = max(range(loc_x))) %>% data.frame()
+
+df[which(df$loc_y > 300),17] <- "3PT Field Goal"
+df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3) # make sure all 2PT scores were actually two points
+df <- df %>% subset(select=-c(team_id, team_name, action_type, combined_shot_type, season, shot_zone_area, shot_zone_basic, shot_zone_range, matchup))
+df <- df %>% subset(select=-c(team_id, team_name))
+df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+
+
+
+## after correlation plot, droping additional terms.
+
+
+# plot
+ggplot(data = df, aes(x = shot_made_flag, y = shot_distance, fill = shot_type)) + geom_boxplot() + 
+  scale_fill_few(palette = "Dark") + theme_few() + ggtitle("Attrition vs. Age") + 
+  theme(panel.background = element_rect(fill = 'ivory1'))
+
+plot(df$shot_distance, df$shot_made_flag, pch = '*')
+
+
+
+
+
+
 
 # unlist shot data, save into a data frame
 shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)

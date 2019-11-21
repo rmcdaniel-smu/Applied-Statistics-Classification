@@ -4,11 +4,7 @@ p_load(ggplot2, dplyr, tidyverse, dummies, MASS)
 df <- read.csv("C:/Users/Pablo/Desktop/KG6372/paul/modelingKobeData.csv", 
                header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
-df[which(df$loc_y > 300),17] <- "3PT Field Goal"
-df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
-df <- df %>% subset(select=-c(team_id, team_name, action_type, combined_shot_type, season, shot_zone_area, shot_zone_basic, shot_zone_range, matchup))
-df <- df %>% subset(select=-c(team_id, team_name))
-df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+
 
 ########################## fiele x dummy variable creation##########
 #x <- data.frame(df$x)
@@ -18,6 +14,7 @@ df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.fa
 df <- df %>% subset(select=-c(opponent))
 
 df.numeric <- df %>% keep(is.numeric)
+
 corrplot::corrplot(cor(df.numeric)
                    , title = "Correlation of Predictor Variables, Before Variable Elimination"
                    , type = "lower"
