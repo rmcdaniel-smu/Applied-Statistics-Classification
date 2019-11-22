@@ -3,7 +3,7 @@ p_load(skimr,tidyverse, corrplot, MASS)
 
 kobe = read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
-
+#Model data
 ##############################################################################################################
 #factorize variables
 kobe_clean = kobe %>%
@@ -35,10 +35,3 @@ threepoint =kobe_clean %>% filter(shot_type == "3PT Field Goal")#(0,0) is a 2 po
 plot_ly(data = threepoint,x = ~loc_x, y = ~loc_y)
 
 
-##############################################################################################################
-#remove variables
-#single item vairables: team_id,team_name
-#High multicolinearity/redundant items: matchup, game_event_id, game_id, lat, lon, combined_shot_type, shot_zone_range
-
-kobe_clean = kobe_clean %>%
-  select(-team_id,-team_name,-matchup,-game_event_id,-game_id,-lat,-lon, - combined_shot_type, -shot_zone_range)
