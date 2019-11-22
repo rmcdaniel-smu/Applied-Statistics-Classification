@@ -5,8 +5,11 @@ df <- read.csv("./modelingKobeData.csv",
                header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
+=======
+>>>>>>> 498358101e7aea8b713d51270693b6d64122c1e4
 df[which(df$action_type == "Alley Oop Dunk Shot"),2] = "short"
 df[which(df$action_type == "Cutting Layup Shot"),2] = "short"
 df[which(df$action_type == "Driving Dunk Shot"),2] = "short"
