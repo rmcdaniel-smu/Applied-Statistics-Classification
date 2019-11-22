@@ -11,17 +11,161 @@ abstract: This project investigates the correlation between multiple potential e
 output: pdf_document
 ---
 
-```{r setup, include=FALSE}
+```{r Setup and Loading Packages, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(pacman)
+p_load(rrcov, MASS, dplyr, purrr, ggplot2)
+
+# read in modeling data
+
+df <- read.csv("c:/users/pablo/desktop/kg6372/paul/modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
+which(is.na(df$shot_zone_range))
 ```
 
 ## R Markdown
 
 This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+In preparation for analysis, derrived data was neeeded to simplify overly complicated variables for the model. The over-complication is with respect to the availability of other predictor variables.
 
-```{r cars}
+```{r Data Transformations, echo=F}
+df[which(df$action_type == "Alley Oop Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Cutting Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Driving Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Driving Finger Roll Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Driving Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Driving Reverse Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Driving Slam Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Finger Roll Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Follow Up Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Putback Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Putback Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Putback Slam Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Reverse Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Reverse Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Reverse Slam Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Running Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Running Finger Roll Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Running Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Running Reverse Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Running Slam Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Running Tip Shot"),"action_type"] = "short"
+df[which(df$action_type == "Slam Dunk Shot"),"action_type"] = "short"
+df[which(df$action_type == "Tip Layup Shot"),"action_type"] = "short"
+df[which(df$action_type == "Tip Shot"),"action_type"] = "short"
+
+df$action_type <- ifelse(df$action_type=="short", "short", "long")
+
+df[which(df$combined_shot_type == "Jump Shot"),"combined_shot_type"] = "short"
+df[which(df$combined_shot_type == "Dunk"),"combined_shot_type"] = "short"
+df[which(df$combined_shot_type == "Layup"),"combined_shot_type"] = "short"
+df[which(df$combined_shot_type == "Tip Shot"),"combined_shot_type"] = "short"
+df[which(df$combined_shot_type == "Hook Shot"),"combined_shot_type"] = "short"
+df[which(df$combined_shot_type == "Bank Shot"),"combined_shot_type"] = "short"
+
+df$combined_shot_type <- ifelse(df$combined_shot_type=="short", "short", "long")
+
+```
+
+
+### Next, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
+```{r Transformations Pt. 2, echo=F}
+
+badNews <- "Sorry, but your math is off. If at first you don't succeed, try, try again. Don't give up too easily; persistence pays off in the end..."
+
+tryCatch(
+    {
+
+    # Convert all integers to numeric and characters to factors with levels:
+    df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+    df <- df %>% subset(select=-c(team_id, # dropping since this is a uniform distribution of data
+                                  team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
+                                  action_type, # dropping this in favor of combined_shot_type; combined shot type required less data transformation and describes the same thing.
+                                  shot_zone_area, # this is ambiguous and less descriptive than geospatial data
+                                  shot_zone_basic, # this is ambiguous and less descriptive than geospatial data and is collinear with shot zone area
+                                  shot_zone_range, # this is ambiguous and less descriptive than geospatial data and is collinear with shot zone area and shot zone basic
+                                  matchup # removing in favor of opponent; "LAL vs." and "LAL @" will always be the same in matchu since Kobe only played for the Lakers
+                                  )
+                        )
+    
+    # create numeric dataframe for correlation plot
+    df.numeric <- df %>% keep(is.numeric)
+    
+    },
+    error = function(e)
+    {
+      badNews
+    }
+)
+```
+
+# Outlier Check
+### A brief outlier check indicated a 2PT Field Goal was noted from the 3PT (3-point) range. Regardless of the actual score, the location matters more. Therefore, after confirming these values to be within 3PT-range, all shots will be encoded as 3-point once beyond 300 inches.
+```{r outlier check, echo=F, include= F}
+df[which(df$loc_y > 300),"shot_type"] <- "3PT Field Goal"
+# Convert the points to integer values since they have integer value in reality
+df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
+```
+
+
+# Multicollinearity Among Predictor Variables
+### To address multicollinearity among quantitative predictor variables, we used a correlation matrix.
+```{r Multicollinearity, echo=F, include=T}
+corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
+                   , title = "Correlation of Quantitative Predictor Variables, Before Variable Elimination"
+                   , type = "lower"
+                   , tl.pos = "ld"
+                   , method = "square"
+                   , tl.cex = 0.65
+                   , tl.col = 'red'
+                   , order = "alphabet"
+                   , diag = F
+                   , mar=c(0,0,5,0)
+                   , bg="ivory1"
+                   ,tl.srt=.05
+)
+```
+# Post-Correlation Plot Variable Elimination
+### Following our correlation plot, we decided to eliminate some collinear terms. However, some of the collinearity is useful to capture the instances where the terms are unique. 
+```{r Post-Correlation Plot Variable Elimination, echo=F}
+df <- df %>% subset(select=-c(lat, # dropping lat because it is collinear with loc_y and shot_distance
+                              lon, # dropping lon because it is collinear with loc_x and shot_distance
+                              period, # dropping period in favor of game event id because game event id is more descriptive and continuous
+                             )
+                    )
+```
+
+# Correlation Matrix
+###Following this correlation plot, we needed a correlation matrix to analyze collinearity among both quantitative and qualitative data. Collinear quantitative data was preliminarily removed following correlation plot analysis to desaturate the model to an extent that allows more distinction among significance measures for terms in the correlation matrix.
+```{r Correlation Matrix for Quantitative and Qualitative Data, echo=F, include=T}
+flattenCorrMatrix <- function(cormatrix, pmatrix) {
+  ut <- upper.tri(cormatrix)
+  data.frame(
+    row = rownames(cormatrix)[row(cormatrix)[ut]],
+    column = rownames(cormatrix)[col(cormatrix)[ut]],
+    cor  =(cormatrix)[ut],
+    p = pmatrix[ut]
+  )
+}
+
+options(scipen=999)
+options(max.print=100000)
+
+#See what variables are correlated with eachother, p-values
+correlation.matrix <- rcorr(as.matrix(df))
+corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
+
+corDF.ordered <- data.frame(corDF[order(-corDF$cor),])
+collinear.correlation <- corDF[which(corDF$cor >= 0.75),]
+
+collinear.correlation <- data.frame(collinear.correlation[order(-collinear.correlation$cor),])
+#write.csv(colinear.correlation, "Collinear_Correlation_Matrix.csv")
+#write.csv(corDF.ordered, "All_Vars_Correlation_Matrix.csv")
+```
+
+```{r Quadratic Discriminant Analysis,echo=F}
 summary(cars)
 ```
 
