@@ -6,6 +6,7 @@ df <- read.csv("./modelingKobeData.csv",
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 
 =======
 =======
@@ -46,6 +47,45 @@ df[which(df$combined_shot_type == "Hook Shot"),2] = "short"
 df[which(df$combined_shot_type == "Bank Shot"),2] = "short"
 df$combined_shot_type <- ifelse(df$combined_shot_type=="short", "short", "long")
 
+||||||| merged common ancestors
+=======
+df[which(df$action_type == "Alley Oop Dunk Shot"),2] = "short"
+df[which(df$action_type == "Cutting Layup Shot"),2] = "short"
+df[which(df$action_type == "Driving Dunk Shot"),2] = "short"
+df[which(df$action_type == "Driving Finger Roll Layup Shot"),2] = "short"
+df[which(df$action_type == "Driving Layup Shot"),2] = "short"
+df[which(df$action_type == "Driving Reverse Layup Shot"),2] = "short"
+df[which(df$action_type == "Driving Slam Dunk Shot"),2] = "short"
+df[which(df$action_type == "Dunk Shot"),2] = "short"
+df[which(df$action_type == "Finger Roll Layup Shot"),2] = "short"
+df[which(df$action_type == "Follow Up Dunk Shot"),2] = "short"
+df[which(df$action_type == "Layup Shot"),2] = "short"
+df[which(df$action_type == "Putback Dunk Shot"),2] = "short"
+df[which(df$action_type == "Putback Layup Shot"),2] = "short"
+df[which(df$action_type == "Putback Slam Dunk Shot"),2] = "short"
+df[which(df$action_type == "Reverse Dunk Shot"),2] = "short"
+df[which(df$action_type == "Reverse Layup Shot"),2] = "short"
+df[which(df$action_type == "Reverse Slam Dunk Shot"),2] = "short"
+df[which(df$action_type == "Running Dunk Shot"),2] = "short"
+df[which(df$action_type == "Running Finger Roll Layup Shot"),2] = "short"
+df[which(df$action_type == "Running Layup Shot"),2] = "short"
+df[which(df$action_type == "Running Reverse Layup Shot"),2] = "short"
+df[which(df$action_type == "Running Slam Dunk Shot"),2] = "short"
+df[which(df$action_type == "Running Tip Shot"),2] = "short"
+df[which(df$action_type == "Slam Dunk Shot"),2] = "short"
+df[which(df$action_type == "Tip Layup Shot"),2] = "short"
+df[which(df$action_type == "Tip Shot"),2] = "short"
+df$action_type <- ifelse(df$action_type=="short", "short", "long")
+
+df[which(df$combined_shot_type == "Jump Shot"),2] = "short"
+df[which(df$combined_shot_type == "Dunk"),2] = "short"
+df[which(df$combined_shot_type == "Layup"),2] = "short"
+df[which(df$combined_shot_type == "Tip Shot"),2] = "short"
+df[which(df$combined_shot_type == "Hook Shot"),2] = "short"
+df[which(df$combined_shot_type == "Bank Shot"),2] = "short"
+df$combined_shot_type <- ifelse(df$combined_shot_type=="short", "short", "long")
+
+>>>>>>> 498358101e7aea8b713d51270693b6d64122c1e4
 df[which(df$loc_y > 300),17] <- "3PT Field Goal"
 df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
 
