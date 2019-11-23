@@ -1,20 +1,25 @@
 ---
-title: "Kobe Bryant Make His Next Shot: Linear Discriminant Analysis and Logistic Regression "
+title: 'Kobe Bryant Make His Next Shot: Linear Discriminant Analysis and Logistic
+  Regression '
 author:
 - Paul Adams
 - Reannan McDaniel
 - Jeff Nguyen
 - Southern Methodist University
 date: "`r format(Sys.time(), '%d %B %Y')`"
-abstract: This project investigates the correlation between multiple potential explanatory variables and Kobe Bryant's ability to make a shot while playing
-          for the NBA team Los Angeles Lakers using data gathered from `1996`-`2015`.
-output: pdf_document
+output:
+  pdf_document: default
+    df_print: paged
+  html_document:
+    df_print: paged
+abstract: This project investigates the correlation between multiple potential explanatory
+  variables and Kobe Bryant's ability to make a shot while playing for the NBA team
+  Los Angeles Lakers using data gathered from `1996`-`2015`.
 ---
 
-```{r Setup and Loading Packages, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r Setup and Loading Packages, echo=F, include=F}
 library(pacman)
-p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, jtools, knitr, kableExtra) #( Hmisc is for correlation matrix rcorr() )
+p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra) #( Hmisc is for correlation matrix rcorr() )
 
 # read in modeling data
 
@@ -22,13 +27,11 @@ df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, strin
 which(is.na(df$shot_zone_range))
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+#Exploratory Data Analysis
 
 In preparation for analysis, derrived data was neeeded to simplify overly complicated variables for the model. The over-complication is with respect to the availability of other predictor variables.
 
-```{r Data Transformations, echo=F}
+```{r Data Transformations Phase One, echo=F}
 df[which(df$action_type == "Alley Oop Dunk Shot"),"action_type"] = "short"
 df[which(df$action_type == "Cutting Layup Shot"),"action_type"] = "short"
 df[which(df$action_type == "Driving Dunk Shot"),"action_type"] = "short"
@@ -69,7 +72,7 @@ df$combined_shot_type <- ifelse(df$combined_shot_type=="short", "short", "far")
 
 
 ### Next, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
-```{r Transformations Pt. 2, echo=F}
+```{r Transformations Phase Two, echo=F}
 
 badNews <- "Sorry, but your math is off. If at first you don't succeed, try, try again. Don't give up too easily; persistence pays off in the end..."
 
@@ -98,7 +101,7 @@ tryCatch(
 )
 ```
 
-# Outlier Check
+## Outlier Check
 ### A brief outlier check indicated a 2PT Field Goal was noted from the 3PT (3-point) range. Regardless of the actual score, the location matters more. Therefore, after confirming these values to be within 3PT-range, all shots will be encoded as 3-point once beyond 300 inches.
 ```{r outlier check, echo=F, include= F}
 df[which(df$loc_y > 300),"shot_type"] <- "3PT Field Goal"
@@ -108,8 +111,7 @@ df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
 ```
 
 
-# Multicollinearity Among Predictor Variables pt. 1
-##Correlation Plot for Visual Data Exploration
+## Multicollinearity Among Predictor Variables Phase One: Correlation Plot for Visual Data Exploration
 ### To address multicollinearity among quantitative predictor variables, we used a correlation matrix.
 ```{r Multicollinearity, echo=F, include=T}
 corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
@@ -126,7 +128,8 @@ corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
                    ,tl.srt=.05
 )
 ```
-# Post-Correlation Plot Variable Elimination
+
+## Post-Correlation Plot Variable Elimination
 ### Following our correlation plot, we decided to eliminate some collinear terms. However, some of the collinearity is useful to capture the instances where the terms are unique. For example, `combined_shot_type` (factor variable) is collinear with `shot_distance` (quantitative variable), but it also accounts for the method Kobe may use to make a shot. For example, distance may be relatively the same between 10 and 11 feet, but the factor levels used to derrive their `short` or `far` indications may differ. This difference could be whether Kobe makes a potentially more accurate heel-planted shot or if he is forced to lean forward and take a riskier shot at basket; the difference in distance may only be one foot, but the difference in technique could measure significant relative to the odds of success.
 ```{r Post-Correlation Plot Variable Elimination, echo=F}
 df <- df %>% subset(select=-c(lat, # dropping lat because it is collinear with loc_y and shot_distance
@@ -135,12 +138,13 @@ df <- df %>% subset(select=-c(lat, # dropping lat because it is collinear with l
                               playoffs # dropping playoffs for game_id; game ID can capture playoffs seasonally
                              )
                     )
+
+df.numeric <- df %>% keep(is.numeric) %>% mutate_if(is.integer, as.numeric)
 ```
 
-# Multicollinearity Among Predictor Variables pt. 2
-##Correlation Matrix
+## Multicollinearity Among Predictor Variables Phase Two: Correlation Matrix
 ###Following the removal of the most obvious collinear terms visually performing a correlation plot analysis, a correlation matrix for analyzing the remaining results. Collinear quantitative data was preliminarily removed following correlation plot analysis to desaturate the model to an extent that allows more distinction among significance measures for terms in the correlation matrix.
-```{r Correlation Matrix for Quantitative Data echo=F, include=T}
+```{r Correlation Matrix for Quantitative Data, echo=F, include=T}
 flattenCorrMatrix <- function(cormatrix, pmatrix) {
   ut <- upper.tri(cormatrix)
   data.frame(
@@ -155,13 +159,14 @@ options(scipen=999)
 options(max.print=100000)
 
 #See what variables are correlated with eachother, p-values
-correlation.matrix <- rcorr(as.matrix(df.numeric), type="pearson")
+correlation.matrix <- Hmisc::rcorr(as.matrix(df.numeric), type="pearson")
 corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
 
 corDF.ordered <- data.frame(corDF[order(-corDF$cor),])
-collinear.correlation <- corDF[which(corDF$cor >= 0.75),]
+collinear.correlation <- corDF[which(corDF$cor >= 0.50),]
 
 collinear.correlation <- data.frame(collinear.correlation[order(-collinear.correlation$cor),])
+collinear.correlation
 #write.csv(colinear.correlation, "Collinear_Correlation_Matrix.csv")
 #write.csv(corDF.ordered, "All_Vars_Correlation_Matrix.csv")
 ```
@@ -172,8 +177,9 @@ collinear.correlation <- data.frame(collinear.correlation[order(-collinear.corre
 ###Linear Discriminant Analysis requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, Quadratic Discriminant Analysis must be used. Wilks' Lambda distribution is used to assess the nature of boundary linearity, which can be used for discriminant analysis. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used. Bartlett's Test is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the Chi-Square distribution. Provided is a test statistic and p-value.
 
 ### Bartlett's Test:
-```{r Quadratic Discriminant Analysis,echo=F}
-Bartlett_ChiSq <- Wilks.test(shot_made_flag ~ ., data=df.numeric, method = "c", approximation = "Bartlett")
+```{r Quadratic Discriminant Analysis: Test Identification, echo=F, include=T}
+
+Bartlett_ChiSq <- rrcov::Wilks.test(shot_made_flag ~ ., data=df.numeric, method = "c", approximation = "Bartlett")
 # Wilk's Lambda produces significant p-value in Bartlett's test so we need to use a Quadratic Discriminant Analysis instead of Linear
 format(round(Bartlett_ChiSq$p.value, 2), nsmall=4)
 
@@ -196,10 +202,11 @@ kable(data.frame("Chi-Square Statistic" = dfBartlett$`Chi-Square Statistic`,
   kable_styling(position = "center")
 ```
 
-Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
+### Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
 
-```{r Quadratic Discriminant Analysis,echo=F}
+```{r Quadratic Discriminant Analysis: Test Production, echo=F}
 # MASS package used for qda()
+#df.numeric <- df.numeric[order(df.numeric$shot_made_flag),]
 kobe.qda <- qda(shot_made_flag ~ ., CV=T, data=df.numeric)
 
 data.frame(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
