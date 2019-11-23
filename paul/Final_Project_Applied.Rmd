@@ -1,6 +1,5 @@
 ---
-title: 'Kobe Bryant Make His Next Shot: Linear Discriminant Analysis and Logistic
-  Regression '
+title: 'Will Kobe Bryant Make His Next Shot:  Linear Discriminant Analysis and Logistic Regression using R'
 author:
 - Paul Adams
 - Reannan McDaniel
@@ -178,16 +177,20 @@ collinear.correlation
 ```{r Quadratic Discriminant Analysis: Test Identification, echo=F, include=F, warning=F}
 
 Bartlett_ChiSq <- rrcov::Wilks.test(shot_made_flag ~ ., data=df.numeric, method = "c", approximation = "Bartlett")
+
 # Wilk's Lambda produces significant p-value in Bartlett's test so we need to use a Quadratic Discriminant Analysis instead of Linear
 format(round(Bartlett_ChiSq$p.value, 2), nsmall=4)
 
 # Wilks' Lambda plus degrees of freedom used in Bartlett's chi-squared test
 WilksDegreesofFreedom <- rbind(as.numeric(paste0(Bartlett_ChiSq$parameter, sep = " ")))
+
 # p-value from Bartlett's test
 Bartlett_ChiSq$p.value
 Bartletts_p <- format(round(as.numeric(Bartlett_ChiSq$p.value), 2), nsmall=4)
-# Because Bartlett's p-value is less than 1, updating to shorter form:
-Bartletts_p <- "p < 0.0001"
+
+# Because Bartlett's p-value is less than 0.0001 (indicated above), updating to shorter form:
+Bartletts_p = ifelse(Bartlett_ChiSq$p.value < 0.0001, "p < 0.0001", Bartlett_ChiSq$p.value)
+#Bartletts_p <- "p < 0.0001"
 
 dfBartlett <- data.frame(WilksDegreesofFreedom, Bartlett_ChiSq$wilks, Bartletts_p)
 colnames(dfBartlett) <- c("Chi-Square Statistic", "Degrees of Freedom", "Wilks' Lambda", "p-value")
@@ -253,7 +256,11 @@ summary(forward.glm)
 
 ## **Forward Selection - Akaike's Information Criterion for Logistic Regression:**
 ```{r akaikes foreward, echo=F, include=T}
-forward.glm$aic
+
+kable(data.frame("Akaikes Information Criterion: Foreward Selection" = forward.glm$aic),
+      format="markdown", booktabs = T)  %>%
+  kable_styling(position = "center")
+
 ```
 
 ## **Backward Elimination**
@@ -278,8 +285,12 @@ back.glm$aic
 ```
 
 ## **Backward Elmination - Akaike's Information Criterion for Logistic Regression:**
-```{r akaikes backward, echo=F, include=T}
-back.glm$aic
+```{r akaikes backward, echo=F, include=T, warning=F}
+
+kable(data.frame("Akaikes Information Criterion: Backward Elimination" = back.glm$aic),
+      format="markdown", booktabs = T)  %>%
+  kable_styling(position = "center")
+
 ```
 
 ## **Stepwise Regression**
@@ -306,5 +317,9 @@ step.glm$aic
 
 ## **Stepwise Regression - Akaike's Information Criterion for Logistic Regression:**
 ```{r akaikes, echo=F, include=T}
-step.glm$aic
+
+kable(data.frame("Akaikes Information Criterion: Stepwise Regression" = step.glm$aic),
+      format="markdown", booktabs = T)  %>%
+  kable_styling(position = "center")
+
 ```
