@@ -7,9 +7,9 @@ author:
 - Southern Methodist University
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
 df_print: paged
 ---
 ```{r Setup and Loading Packages, echo=F, include=F, warning=F}
@@ -25,49 +25,7 @@ sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
   
 # **Exploratory Data Analysis**
 
-### In preparation for analysis, derrived data was neeeded to simplify overly complicated variables for the model. The over-complication is with respect to the availability of other predictor variables.
-
-```{r Data Transformations Phase One, echo=F, warning=F}
-df[which(df$action_type == "Alley Oop Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Cutting Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Driving Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Driving Finger Roll Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Driving Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Driving Reverse Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Driving Slam Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Finger Roll Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Follow Up Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Putback Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Putback Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Putback Slam Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Reverse Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Reverse Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Reverse Slam Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Running Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Running Finger Roll Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Running Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Running Reverse Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Running Slam Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Running Tip Shot"),"action_type"] = "short"
-df[which(df$action_type == "Slam Dunk Shot"),"action_type"] = "short"
-df[which(df$action_type == "Tip Layup Shot"),"action_type"] = "short"
-df[which(df$action_type == "Tip Shot"),"action_type"] = "short"
-
-df$action_type <- ifelse(df$action_type=="short", "short", "long")
-
-# shots with "Dunk", "Layup", or "Tip" are short:
-df[which(df$combined_shot_type == "Dunk"),"combined_shot_type"] = "short"
-df[which(df$combined_shot_type == "Layup"),"combined_shot_type"] = "short"
-df[which(df$combined_shot_type == "Tip Shot"),"combined_shot_type"] = "short"
-
-df$combined_shot_type <- ifelse(df$combined_shot_type=="short", "short", "far")
-
-```
-
-
-### Next, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
+### First, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
 ```{r Transformations Phase Two, echo=F, warning=F}
 
 badNews <- "Sorry, but your math is off and the transformations were not performed. Please update and try again."
@@ -98,7 +56,7 @@ tryCatch(
 ```
 
 ## **Outlier Check**
-### A brief outlier check indicated a 2PT Field Goal was noted from the 3PT (3-point) range. Regardless of the actual score, the location matters more. Therefore, after confirming these values to be within 3PT-range, all shots will be encoded as 3-point once beyond 300 inches.
+### Next, we performed a brief outlier check indicated a 2PT Field Goal was noted from the 3PT (3-point) range. Regardless of the actual score, the location matters more. Therefore, after confirming these values to be within 3PT-range, all shots will be encoded as 3-point once beyond 300 inches.
 ```{r outlier check, echo=F, include= F, warning=F}
 # unlist shot data, save into a data frame
 shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
@@ -120,7 +78,7 @@ df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
 ### To address multicollinearity among quantitative predictor variables, we used a correlation matrix.
 ```{r Multicollinearity, echo=F, include=T, warning=F}
 corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
-                   , title = "Correlation of Quantitative Predictor Variables, Before Variable Elimination"
+                   , title = "Correlation among Predictor Variables"
                    , type = "lower"
                    , tl.pos = "ld"
                    , method = "square"
@@ -180,7 +138,7 @@ collinear.correlation
 
 
 # After the first round of 
-```{r Make Train and Test Data, echo=F, include=F}
+```{r Make Train and Test Data, echo=F, include=F, warning=F}
 
 dfTrain <- df[which(!is.na(df$shot_made_flag)),]
 prediction.Data <- df[which(is.na(df$shot_made_flag)),]
@@ -290,20 +248,23 @@ confusion_matrix_results$byClass[[4]] # Neg Pred Value
 confusion_matrix_results$byClass[[5]] # Precision
 confusion_matrix_results$byClass[[11]] # Balanced Accuracy
 
-(confusion_matrix_results$table[2,1] + confusion_matrix_results)) / sum(confusion_matrix_results$table)
-table(confusion_matrix_results
+```
 
-kable(data.frame("Sensitivity" = confusion_matrix_results$byClass[[1]],
+```{r Confusion Matrix Production, echo=F, include=T, warning=F}
+
+misclassification.QDA <- (confusion_matrix_results$table[2,1] + confusion_matrix_results$table[1,2]) / sum(confusion_matrix_results$table)
+
+suppressWarnings(kable(data.frame("Sensitivity" = confusion_matrix_results$byClass[[1]],
                  "Specificity" = confusion_matrix_results$byClass[[2]],
                  "Pos Pred Value" = confusion_matrix_results$byClass[[3]],
                  "Neg Pred Value" = confusion_matrix_results$byClass[[4]],
                  "Precision" = confusion_matrix_results$byClass[[5]],
-                 "Balanced Accuracy" = confusion_matrix_results$byClass[[11]]),
+                 "Accuracy" = confusion_matrix_results$byClass[[11]],
+                 "Misclassification" = misclassification.QDA),
       format="markdown", booktabs = T)  %>%
-  kable_styling(position = "center")
+  kable_styling(position = "center"))
 
 ```
-
 # **Logistic Model Development using Ordinary Least Squares**
 ### A preliminary, manual veriable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.
 ```{r Variable Boundaries Models, echo=F, warning=F}
@@ -336,7 +297,7 @@ summary(forward.glm)
 ```
 
 ## **Forward Selection - Akaike's Information Criterion for Logistic Regression:**
-```{r akaikes foreward, echo=F, include=T}
+```{r akaikes foreward, echo=F, include=T, warning=F}
 
 kable(data.frame("Akaikes Information Criterion: Foreward Selection" = forward.glm$aic),
       format="markdown", booktabs = T)  %>%
@@ -397,7 +358,7 @@ step.glm$aic
 ```
 
 ## **Stepwise Regression - Akaike's Information Criterion for Logistic Regression:**
-```{r akaikes, echo=F, include=T}
+```{r akaikes, echo=F, include=T, warning=F}
 
 kable(data.frame("Akaikes Information Criterion: Stepwise Regression" = step.glm$aic),
       format="markdown", booktabs = T)  %>%
