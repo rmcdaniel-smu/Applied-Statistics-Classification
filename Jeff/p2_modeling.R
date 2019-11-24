@@ -46,10 +46,8 @@ testing <- kobe_clean[ -Train, ]
 ctrl <- trainControl(method = "repeatedcv",
                      number = 25,
                      repeats = 5,
-
                      classProbs = T)
   
-trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
 
 #paul's train.control code(for dds says paul)-----
 #train.Control <- trainControl(method = "repeatedcv",
@@ -62,7 +60,7 @@ trainControl(method = "repeatedcv", number = 10, savePredictions = TRUE)
 
 mod_fit <- train(shot_made_flag ~ recId + action_type + minutes_remaining + 
                    period + season + seconds_remaining + shot_distance + shot_zone_area + 
-                   shot_zone_basic + shot_id + attendance + arena_temp,  data=kobe_clean, method="glm", family="binomial",
+                   shot_zone_basic + shot_id + attendance + arena_temp + playoffs,  data=kobe_clean, method="glm", family="binomial",
                  trControl = ctrl, tuneLength = 5)
 
 #Interpret Coefficients
@@ -72,8 +70,9 @@ exp(coef(mod_fit))
 #Model Performance ##############################################################################################################
 #confusion matrix https://rpubs.com/dvorakt/255527
 pred = predict(mod_fit, newdata=training)
-confusionMatrix(table(data=as.numeric(pred>0.5), training$shot_made_flag))
-
+cf = confusionMatrix(table(data=as.numeric(pred>0.5), training$shot_made_flag))
+misclassificationRate = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
+misclassificationRate
 
 #ROC/AUC
 library(ROCR)
@@ -81,7 +80,8 @@ library(Metrics)
 # Compute AUC for predicting Class with the model
 pred <- prediction(pred, training$shot_made_flag)
 perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-plot(perf)
+plot(perf, main = "ROC Curve")
+
 
 auc <- performance(pred, measure = "auc")
 auc <- auc@y.values[[1]]
