@@ -62,7 +62,7 @@ df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.fa
 
 # plot
 ggplot(data = df, aes(x = shot_made_flag, y = shot_distance, fill = shot_type)) + geom_boxplot() + 
-  scale_fill_few(palette = "Dark") + theme_few() + ggtitle("Attrition vs. Age") + 
+  scale_fill_few(palette = "Dark") + theme_few() + ggtitle("Basketball Shots over Distance from Basket") + 
   theme(panel.background = element_rect(fill = 'ivory1'))
 
 plot(df$shot_distance, df$shot_made_flag, pch = '*')
