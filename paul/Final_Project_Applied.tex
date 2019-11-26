@@ -118,31 +118,26 @@ Angeles Lakers using data gathered from
 \section{\texorpdfstring{\textbf{Exploratory Data
 Analysis}}{Exploratory Data Analysis}}\label{exploratory-data-analysis}}
 
-\hypertarget{in-preparation-for-analysis-derrived-data-was-neeeded-to-simplify-overly-complicated-variables-for-the-model.-the-over-complication-is-with-respect-to-the-availability-of-other-predictor-variables.}{%
-\subsubsection{In preparation for analysis, derrived data was neeeded to
-simplify overly complicated variables for the model. The
-over-complication is with respect to the availability of other predictor
-variables.}\label{in-preparation-for-analysis-derrived-data-was-neeeded-to-simplify-overly-complicated-variables-for-the-model.-the-over-complication-is-with-respect-to-the-availability-of-other-predictor-variables.}}
-
-\hypertarget{next-we-removed-one-level-factors.-these-will-never-change-so-are-not-useful-to-the-model-including-can-cause-issues-with-model-sensitivity-since-linear-trajectories-will-be-down-weighted.-therefore-their-significance-will-be-lessened-by-the-constant-state-of-the-additional-parameters.-while-this-is-may-not-be-significant-it-is-not-condusive-to-model-quality.}{%
-\subsubsection{Next, we removed one-level factors. These will never
+\hypertarget{first-we-removed-one-level-factors.-these-will-never-change-so-are-not-useful-to-the-model-including-can-cause-issues-with-model-sensitivity-since-linear-trajectories-will-be-down-weighted.-therefore-their-significance-will-be-lessened-by-the-constant-state-of-the-additional-parameters.-while-this-is-may-not-be-significant-it-is-not-condusive-to-model-quality.}{%
+\subsubsection{First, we removed one-level factors. These will never
 change so are not useful to the model; including can cause issues with
 model sensitivity since linear trajectories will be down-weighted.
 Therefore, their significance will be lessened by the constant state of
 the additional parameters. While this is may not be significant, it is
 not condusive to model
-quality.}\label{next-we-removed-one-level-factors.-these-will-never-change-so-are-not-useful-to-the-model-including-can-cause-issues-with-model-sensitivity-since-linear-trajectories-will-be-down-weighted.-therefore-their-significance-will-be-lessened-by-the-constant-state-of-the-additional-parameters.-while-this-is-may-not-be-significant-it-is-not-condusive-to-model-quality.}}
+quality.}\label{first-we-removed-one-level-factors.-these-will-never-change-so-are-not-useful-to-the-model-including-can-cause-issues-with-model-sensitivity-since-linear-trajectories-will-be-down-weighted.-therefore-their-significance-will-be-lessened-by-the-constant-state-of-the-additional-parameters.-while-this-is-may-not-be-significant-it-is-not-condusive-to-model-quality.}}
 
 \hypertarget{outlier-check}{%
 \subsection{\texorpdfstring{\textbf{Outlier
 Check}}{Outlier Check}}\label{outlier-check}}
 
-\hypertarget{a-brief-outlier-check-indicated-a-2pt-field-goal-was-noted-from-the-3pt-3-point-range.-regardless-of-the-actual-score-the-location-matters-more.-therefore-after-confirming-these-values-to-be-within-3pt-range-all-shots-will-be-encoded-as-3-point-once-beyond-300-inches.}{%
-\subsubsection{A brief outlier check indicated a 2PT Field Goal was
-noted from the 3PT (3-point) range. Regardless of the actual score, the
-location matters more. Therefore, after confirming these values to be
-within 3PT-range, all shots will be encoded as 3-point once beyond 300
-inches.}\label{a-brief-outlier-check-indicated-a-2pt-field-goal-was-noted-from-the-3pt-3-point-range.-regardless-of-the-actual-score-the-location-matters-more.-therefore-after-confirming-these-values-to-be-within-3pt-range-all-shots-will-be-encoded-as-3-point-once-beyond-300-inches.}}
+\hypertarget{next-we-performed-a-brief-outlier-check-indicated-a-2pt-field-goal-was-noted-from-the-3pt-3-point-range.-regardless-of-the-actual-score-the-location-matters-more.-therefore-after-confirming-these-values-to-be-within-3pt-range-all-shots-will-be-encoded-as-3-point-once-beyond-300-inches.}{%
+\subsubsection{Next, we performed a brief outlier check indicated a 2PT
+Field Goal was noted from the 3PT (3-point) range. Regardless of the
+actual score, the location matters more. Therefore, after confirming
+these values to be within 3PT-range, all shots will be encoded as
+3-point once beyond 300
+inches.}\label{next-we-performed-a-brief-outlier-check-indicated-a-2pt-field-goal-was-noted-from-the-3pt-3-point-range.-regardless-of-the-actual-score-the-location-matters-more.-therefore-after-confirming-these-values-to-be-within-3pt-range-all-shots-will-be-encoded-as-3-point-once-beyond-300-inches.}}
 
 \hypertarget{addressing-multicollinearity-correlation-plot-for-visual-data-exploration}{%
 \subsection{\texorpdfstring{\textbf{Addressing Multicollinearity:
@@ -188,16 +183,31 @@ preliminarily removed following correlation plot analysis to desaturate
 the model to an extent that allows more distinction among significance
 measures for terms in the correlation matrix.
 
-\begin{verbatim}
-##               row        column       cor p
-## 26          loc_y shot_distance 0.8181240 0
-## 58        game_id       shot_id 0.7612322 0
-## 56          recId       shot_id 0.6917176 0
-## 44  shot_distance     shot_type 0.6686083 0
-## 41          loc_y     shot_type 0.6066234 0
-## 2           recId       game_id 0.5270915 0
-## 104    attendance    avgnoisedb 0.5109168 0
-\end{verbatim}
+\begin{tabular}{l|l|l|l|r}
+\hline
+Row & Column & Correlation & p-value & NA\\
+\hline
+arena\_temp & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+attendance & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+game\_date & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+game\_event\_id & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+game\_id & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+loc\_x & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+loc\_y & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+minutes\_remaining & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+recId & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+seconds\_remaining & arena\_temp & 0.510916827054281 & 0 & 0\\
+\hline
+\end{tabular}
 
 \hypertarget{after-the-first-round-of}{%
 \section{After the first round of}\label{after-the-first-round-of}}
@@ -271,67 +281,6 @@ applied.}\label{bartletts-test-of-this-data-set-yielded-a-significant-p-value-wh
 ## 2               1   0.542211
 \end{verbatim}
 
-\begin{verbatim}
-## [1] 0.5151645
-\end{verbatim}
-
-\begin{verbatim}
-## [1] 0.6658433
-\end{verbatim}
-
-\begin{verbatim}
-## [1] 0.5601486
-\end{verbatim}
-
-\begin{verbatim}
-## [1] 0.6244209
-\end{verbatim}
-
-\begin{verbatim}
-## [1] 0.5601486
-\end{verbatim}
-
-\begin{verbatim}
-## [1] 0.5905039
-\end{verbatim}
-
-\begin{longtable}[]{@{}rrrrrrr@{}}
-\toprule
-\begin{minipage}[b]{0.11\columnwidth}\raggedleft
-Sensitivity\strut
-\end{minipage} & \begin{minipage}[b]{0.11\columnwidth}\raggedleft
-Specificity\strut
-\end{minipage} & \begin{minipage}[b]{0.13\columnwidth}\raggedleft
-Pos.Pred.Value\strut
-\end{minipage} & \begin{minipage}[b]{0.13\columnwidth}\raggedleft
-Neg.Pred.Value\strut
-\end{minipage} & \begin{minipage}[b]{0.09\columnwidth}\raggedleft
-Precision\strut
-\end{minipage} & \begin{minipage}[b]{0.09\columnwidth}\raggedleft
-Accuracy\strut
-\end{minipage} & \begin{minipage}[b]{0.16\columnwidth}\raggedleft
-Misclassification\strut
-\end{minipage}\tabularnewline
-\midrule
-\endhead
-\begin{minipage}[t]{0.11\columnwidth}\raggedleft
-0.5151645\strut
-\end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
-0.6658433\strut
-\end{minipage} & \begin{minipage}[t]{0.13\columnwidth}\raggedleft
-0.5601486\strut
-\end{minipage} & \begin{minipage}[t]{0.13\columnwidth}\raggedleft
-0.6244209\strut
-\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-0.5601486\strut
-\end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-0.5905039\strut
-\end{minipage} & \begin{minipage}[t]{0.16\columnwidth}\raggedleft
-0.4023188\strut
-\end{minipage}\tabularnewline
-\bottomrule
-\end{longtable}
-
 \hypertarget{logistic-model-development-using-ordinary-least-squares}{%
 \section{\texorpdfstring{\textbf{Logistic Model Development using
 Ordinary Least
@@ -374,7 +323,7 @@ Regression:}}{Forward Selection - Akaike's Information Criterion for Logistic Re
 Akaikes.Information.Criterion..Foreward.Selection\tabularnewline
 \midrule
 \endhead
-27378.42\tabularnewline
+26824.26\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -407,7 +356,7 @@ Regression:}}{Backward Elmination - Akaike's Information Criterion for Logistic 
 Akaikes.Information.Criterion..Backward.Elimination\tabularnewline
 \midrule
 \endhead
-27378.42\tabularnewline
+26824.26\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -440,7 +389,7 @@ Regression:}}{Stepwise Regression - Akaike's Information Criterion for Logistic 
 Akaikes.Information.Criterion..Stepwise.Regression\tabularnewline
 \midrule
 \endhead
-27378.42\tabularnewline
+26824.26\tabularnewline
 \bottomrule
 \end{longtable}
 
