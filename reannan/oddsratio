@@ -1,0 +1,104 @@
+title: 'Will Kobe Bryant Make His Next Shot:  Linear Discriminant Analysis and Logistic Regression using R'
+author:
+  - Paul Adams
+- Reannan McDaniel
+- Jeff Nguyen
+- Southern Methodist University
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document: default
+html_document:
+  df_print: paged
+df_print: paged
+
+library(pacman)
+library(tidyverse)
+library(skimr)
+library(olsrr)
+library(ggplot2)
+library(dplyr)
+library(RCurl)
+library(caret)
+library(corrplot)
+library(lmtest)
+library(multcomp)
+library(ggthemes)
+library(Hmisc)
+library(tidyr)
+library(cluster)
+library(robustbase)
+library(vcd)
+library(glm)
+library(oddsratio)
+p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, plotly)
+url <- getURL("https://raw.githubusercontent.com/7446Nguyen/Applied-Statistics-Classification/master/modelingKobeData.csv")
+kobe <-read.csv(text = url, header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
+skimr::skim(kobe)
+
+numericVars = kobe %>% keep(is.numeric)
+view(kobe)
+
+OR <- glm(shot_made_flag ~ shot_distance + shot_zone_area + shot_zone_basic, data = kobe, family = "binomal")
+
+#Odds Ratios
+oddsratio(shot_distance, level = 0.95)
+odds.ratio(shot_zone_area, level = 0.95)
+oddsratio(shot_zone_basic, level = 0.95)
+#Indvidual shot and CI
+##shot_zone_areaCenter(C)
+exp(coef())
+exp(confint())
+##shot_zone_areaLeft Side Center(LC)
+exp(coef())
+exp(confint())
+##shot_zone_areaLeft(L)
+exp(coef())
+exp(confint())
+##shot_zone_areaRight Side Center(RC)
+exp(coef())
+exp(confint())
+##shot_zone_areaRight(R)
+exp(coef())
+exp(confint())
+##shot_zone_basicBackcourt
+exp(coef())
+exp(confint())
+##shot_zone_basicIn The Paint (Non-RA)
+exp(coef())
+exp(confint())
+##shot_zone_basicLeft Corner 3
+exp(coef())
+exp(confint())
+##shot_zone_basicMid-Range
+exp(coef())
+exp(confint())
+##shot_zone_basicRestricted Area
+exp(coef())
+exp(confint())
+##shot_zone_basicRight Corner 3
+exp(coef())
+exp(confint())
+
+#Boxplot for Odds by area or distance
+boxLabels = c("shot_zone_areaCenter(C)", "shot_zone_areaLeft Side Center(LC)", "shot_zone_areaLeft(L)", "shot_zone_areaRight Side Center(RC)", "shot_zone_areaRight(R)", "shot_zone_basicBackcourt", "shot_zone_basicIn The Paint (Non-RA)", "shot_zone_basicLeft Corner 3", "shot_zone_basicMid-Range", "shot_zone_basicRestricted Area", "shot_zone_basicRight Corner 3")
+kobe_OR <- data.frame(yAxis = length(boxLabels)):1, boxOdds = log(c()), 
+boxCILow = c(), 
+boxCIHigh = c())
+
+#plot with CI
+plot1 <- ggplot(df, aes(x = boxOdds, y = boxLabels)) 
+
+(plot1 <- ggplot(df, aes(x = boxOdds, y = boxLabels)) + 
+    geom_vline(aes(xintercept = 0), size = .25, linetype = "dashed") + 
+    geom_errorbarh(aes(xmax = boxCIHigh, xmin = boxCILow), size = .5, height = 
+                     .2, color = "gray50") +
+    geom_point(size = 3.5, color = "orange") +
+    coord_trans(x = scales:::exp_trans(10)) +
+    scale_x_continuous(breaks = log10(seq(0.1, 2.5, 0.1)), labels = seq(0.1, 2.5, 0.1),
+                       limits = log10(c(0.09,2.5))) +
+    theme_bw()+
+    theme(panel.grid.minor = element_blank()) +
+    ylab("") +
+    xlab("Odds ratio") +
+    annotate(geom = "text", y =1.1, x = log10(1.5) + 
+               ggtitle("Distance-Odds Kobe makes the shot"))
