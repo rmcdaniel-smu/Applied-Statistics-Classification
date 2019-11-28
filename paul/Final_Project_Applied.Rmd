@@ -15,7 +15,8 @@ df_print: paged
 ```{r Setup and Loading Packages, echo=F, include=F, warning=F}
 
 library(pacman)
-p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics)
+p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics, tinytex)
+#install_tinytex() #if you do not already have this, you will need to install it to run the latex file. Additionally, install MikTex
 
 df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
@@ -349,7 +350,7 @@ logLoss_StDev <- qda.filtered$results[1,3]
 
 ```
 
-```{r Quadratic Discrim AUC and ROC}
+```{r Quadratic Discrim AUC and ROC, echo=F, include=F, warning=F}
 
 dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="made",1,0)
 internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
