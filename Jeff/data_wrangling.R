@@ -52,8 +52,9 @@ kobe_clean = kobe %>%
   mutate(shot_zone_area=as.factor(shot_zone_area))%>%
   mutate(shot_zone_basic = as.factor(shot_zone_basic))%>%
   mutate(shot_zone_range = as.factor(shot_zone_range))%>%
-  mutate(opponent = as.factor(opponent)) %>%
-  mutate(shot_made_flag=as.factor(shot_made_flag))
+  mutate(opponent = as.factor(opponent)) 
+#%>%
+ # mutate(shot_made_flag=as.factor(shot_made_flag))
 
 
 ##############################################################################################################
