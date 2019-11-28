@@ -35,5 +35,3 @@ plot_ly(data=twopoint,x = ~loc_x, y = ~loc_y)
 
 threepoint =kobe_clean %>% filter(shot_type == "3PT Field Goal")#(0,0) is a 2 point
 plot_ly(data = threepoint,x = ~loc_x, y = ~loc_y)
-
-
