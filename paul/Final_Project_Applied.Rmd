@@ -8,11 +8,12 @@ author:
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
   pdf_document: default
-  html_document:
-    df_print: paged
+  #html_document:
+   # df_print: paged
 df_print: paged
 ---
 ```{r Setup and Loading Packages, echo=F, include=F, warning=F}
+
 library(pacman)
 p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics)
 
@@ -21,10 +22,11 @@ df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, strin
 df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
 sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
+
 ```
 # **Abstract:**  
 ### *This project investigates the correlation between multiple potential explanatory variables and Kobe Bryant's ability to make a shot while playing for the NBA team Los Angeles Lakers using data gathered from `1996`-`2015`.*
-  
+
 # **Exploratory Data Analysis**
 
 ## **Outlier Check**
@@ -51,8 +53,6 @@ df.preds$shot_type <- ifelse(df.preds$shot_type=="2PT Field Goal", 2, 3)
 ## **Variable Elimination**
 ### Next, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
 ```{r Transformations Phase Two, echo=F, warning=F}
-
-badNews <- "Sorry, but your math is off and the transformations were not performed. Please update and try again."
 
 tryCatch(
     {
@@ -87,7 +87,7 @@ tryCatch(
     },
     error = function(e)
     {
-      badNews
+      e
     }
 )
 
@@ -165,8 +165,12 @@ collinear.correlation <- table(collinear.correlation[order(-collinear.correlatio
 collinear.correlation_Ten <- head(data.frame(collinear.correlation), 10)
 colnames(collinear.correlation_Ten) = c("Row", "Column", "Correlation", "p-value")
 
-kable(collinear.correlation_Ten, format="markdown", booktabs = T)  %>%
+#data.frame(collinear.correlation_Ten)
+
+kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
+
+#########
 #write.csv(colinear.correlation, "Collinear_Correlation_Matrix.csv")
 #write.csv(corDF.ordered, "All_Vars_Correlation_Matrix.csv")
 
@@ -194,6 +198,7 @@ subDF.Test <- dfTrain[-train_ind, ] # 25% testing
 
 ### **Bartlett's Test:**
 ```{r Quadratic Discriminant Analysis: Test Identification, echo=F, include=F, warning=F}
+
 dfTrain.numeric <- df.numeric[which(!is.na(df.numeric$shot_made_flag)),]
 prediction.Data.numeric <- df.numeric[which(is.na(df.numeric$shot_made_flag)),]
 
@@ -229,15 +234,21 @@ Bartletts_p = ifelse(Bartlett_ChiSq$p.value < 0.0001, "p < 0.0001", Bartlett_Chi
 
 dfBartlett <- data.frame(WilksDegreesofFreedom, Bartlett_ChiSq$wilks, Bartletts_p)
 colnames(dfBartlett) <- c("Chi-Square Statistic", "Degrees of Freedom", "Wilks' Lambda", "p-value")
+
 ```
 
 ```{r Bartletts Resutls, echo=F, include=T, warning=F}
+
 kable(data.frame("Chi_Square_Statistic" = dfBartlett$`Chi-Square Statistic`,
                  "Degrees_of_Freedom" = dfBartlett$`Degrees of Freedom`,
                  "Wilks_Lambda" = dfBartlett$`Wilks' Lambda`,
                  "p_value" = Bartletts_p),
-      format="markdown", booktabs = T)  %>%
+      format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
+
+#data.frame(dfBartlett$`Chi-Square Statistic`, dfBartlett$`Degrees of Freedom`, dfBartlett$`Wilks' Lambda`, Bartletts_p)
+
+
 ```
 
 ### Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
@@ -284,7 +295,7 @@ qda.filtered <- train(shot_made_flag ~ .
                 #, preProcess = "spatialSign"
                 , metric = "logLoss"
                  )
-colnames(subDF.Train.numeric)
+
 # test the model on the 25% partitions from the internal dataset:
 test_pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
 
@@ -325,6 +336,8 @@ misclassification.QDA <- (confusion_matrix_results.internal$table[2,1] + confusi
 
 kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
 
+#data.frame(misclassification.QDA)
+
 ```
 
 ## **Log Loss**
@@ -364,8 +377,10 @@ suppressWarnings(kable(data.frame("Sensitivity" = round(Sensitivity.confusion, d
                  "Misclassification" = round(misclassification.QDA, digits=5),
                  "Logarithmic_Loss" = round(logLoss, digits=5),
                  "AUC" = AUC),
-      format="markdown", booktabs = T)  %>%
+      format="latex", booktabs = T)  %>%
   kable_styling(position = "center"))
+
+#data.frame(round(Sensitivity.confusion, digits=5), round(Specificity.confusion, digits=5), round(Pos_Pred_Value.confusion, digits=5), round(Neg_Pred_Value.confusion, digits=5), round(Precision.confusion, digits=5), round(Accuracy.confusion, digits=5), round(misclassification.QDA, digits=5), round(logLoss, digits=5),AUC)
 
 ```
 
