@@ -14,7 +14,7 @@ df_print: paged
 ---
 ```{r Setup and Loading Packages, echo=F, include=F, warning=F}
 library(pacman)
-p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase)
+p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics)
 
 df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
@@ -229,165 +229,170 @@ colnames(dfBartlett) <- c("Chi-Square Statistic", "Degrees of Freedom", "Wilks' 
 ```
 
 ```{r Bartletts Resutls, echo=F, include=T, warning=F}
-kable(data.frame("Chi-Square Statistic" = dfBartlett$`Chi-Square Statistic`,
-                 "Degrees of Freedom" = dfBartlett$`Degrees of Freedom`,
-                 "Wilks' Lambda" = dfBartlett$`Wilks' Lambda`,
-                 "p-value" = Bartletts_p),
-      format="markdown", booktabs = T)  %>%
+kable(data.frame("Chi_Square_Statistic" = dfBartlett$`Chi-Square Statistic`,
+                 "Degrees_of_Freedom" = dfBartlett$`Degrees of Freedom`,
+                 "Wilks_Lambda" = dfBartlett$`Wilks' Lambda`,
+                 "p_value" = Bartletts_p),
+      format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
 ```
 
 ### Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
 
 ```{r Quadratic Discriminant Analysis: Test Production, echo=F, warning=F, include=T}
+##################################################################################################
+##################################################################################################
+##################################################################################################
+                                    ####### a Priori #######
 # MASS package used for qda()
 #df.numeric <- df.numeric[order(df.numeric$shot_made_flag),]
 kobe.qda <- qda(shot_made_flag ~ ., CV=T, data=dfTrain.numeric)
 
 data.frame(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
 
-shot_made_flagg <- rbind("0", "1")
-proportion <- rbind(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
-table(shot_made_flagg, proportion) # Class Level Information
+shot_made_flag_Posterior <- rbind("0", "1")
+proportion_Posterior <- rbind(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
+data.frame(shot_made_flag_Posterior, proportion_Posterior)
+
+
+
+##################################################################################################
+##################################################################################################
+##################################################################################################
 
 subDF.Train.numeric$shot_made_flag <- as.factor(subDF.Train.numeric$shot_made_flag)
 #subDF.Train.numeric$shot_made_flag <- ifelse(subDF.Train.numeric$shot_made_flag=="1", "made", "not_made")
 subDF.Train.numeric <- subDF.Train.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
 
+# k=25 folds, repeat random folding for internal cross-validation 5 times:
 train.Control <- caret::trainControl(method = "repeatedcv",
                               number = 25,
                               repeats = 5,
-                              summaryFunction = twoClassSummary,
-                              classProbs = T)
+                              #summaryFunction = twoClassSummary,
+                              summaryFunction = mnLogLoss,
+                              classProbs = T) # classProbs=T to get mnLogLoss (also for twoClassSummary)
 
+# build the model using the 75% partitioned from the internal dataset (the set with all shot_made_flag response results):
 qda.filtered <- train(shot_made_flag ~ .
                 , data = subDF.Train.numeric
                 , method = "qda"
                 , trControl=train.Control
                 , preProcess = c("center", "scale", "spatialSign")
                 #, preProcess = "spatialSign"
-                , metric = "Spec"
+                , metric = "logLoss"
                  )
 
+# test the model on the 25% partitions from the internal dataset:
 test_pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
 
-#droplevels(subDF.Test.numeric$shot_made_flag) class(dfTest.numeric$shot_made_flag)
-confusion_matrix_results <- confusionMatrix(table(test_pred.qda.filtered, subDF.Test.numeric$shot_made_flag))
+# build a confusion matrix for internal cross-validation to see performance:
+confusion_matrix_results.test <- confusionMatrix(table(test_pred.qda.filtered, subDF.Test.numeric$shot_made_flag))
 
 ```
 
+
 ```{r Predicting Internal Data for Model Metrics, echo=F, include=T, warning=F}
 
+# apply the model developed above to the entire (75 + 25 = 100%) internal dataset. In other words, make predictions on the data that has results so they can be compared (no folds, no repeats this time):
+internal_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = dfTrain.numeric))
 
-train.Control <- caret::trainControl(method = "repeatedcv",
-                              number = 25,
-                              repeats = 5,
-                              summaryFunction = twoClassSummary,
-                              classProbs = T)
+# compare the predicted results to the actual results to make sure model still performs as intended:
+confusion_matrix_results.internal <- confusionMatrix(table(internal_cv.predicted.qda, dfTrain.numeric$shot_made_flag))
 
-qda.filtered <- train(shot_made_flag ~ .
-                , data = df.numeric
-                , method = "qda"
-                , trControl=train.Control
-                , preProcess = c("center", "scale", "spatialSign")
-                #, preProcess = "spatialSign"
-                , metric = "Spec"
-                 )
+```
 
+```{r Gathering Specificity, Sensitivity, Accuracty from Confusion Matrix, echo=F, includ=F, warning=F}
 
+SpecSense.confusion <- data.frame(confusion_matrix_results.internal$byClass)
+AccuracyP.confusion <- data.frame(confusion_matrix_results.internal$overall)
 
-
-
-
-
-
-
-df.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = df.numeric))
-
-#droplevels(subDF.Test.numeric$shot_made_flag) class(dfTest.numeric$shot_made_flag)
-confusion_matrix_results <- confusionMatrix(table(df.qda.filtered, df.numeric$shot_made_flag_predicted))
+Accuracy.confusion <- AccuracyP.confusion[1,]
+Sensitivity.confusion <- SpecSense.confusion[1,]
+Specificity.confusion <- SpecSense.confusion[2,]
+Pos_Pred_Value.confusion <- SpecSense.confusion[3,]
+Neg_Pred_Value.confusion <- SpecSense.confusion[4,]
+Precision.confusion <- SpecSense.confusion[5,]
 
 ```
 
 ## **Quadratic Discriminant Analysis Misclassification Rate**
-```{r Confusion Matrix Production, echo=F, include=T, warning=F}
+```{r Misclassification Calculated from Full Internal Dataset, echo=F, include=T, warning=F}
 
-misclassification.QDA <- (confusion_matrix_results$table[2,1] + confusion_matrix_results$table[1,2]) / sum(confusion_matrix_results$table)
-kable(misclassification.QDA)
+misclassification.QDA <- (confusion_matrix_results.internal$table[2,1] + confusion_matrix_results.internal$table[1,2]) / sum(confusion_matrix_results.internal$table)
+
+kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
 
 ```
 
 ## **Log Loss**
 ```{r Log Loss Function, echo=F, include=T, warning=F}
 
-logloss.subDF.Train.numeric <- subDF.Train.numeric
-logloss.subDF.Train.numeric$shot_made_flag <- ifelse(logloss.subDF.Train.numeric$shot_made_flag == "made", 1, 0)
-logloss.test_pred.qda.filtered <- test_pred.qda.filtered
-logloss.test_pred.qda.filtered <- ifelse(logloss.test_pred.qda.filtered == "made", 1, 0)
-
-loglossTraining = logloss.subDF.Train.numeric %>% mutate(logloss = logloss.subDF.Train.numeric$shot_made_flag * log(1-logloss.test_pred.qda.filtered) + (1-logloss.subDF.Train.numeric$shot_made_flag)*log(1-logloss.test_pred.qda.filtered))
-
-# Will generate log loss value
-loglossValue = -1/15523 * sum(loglossTraining$logloss)
-loglossValue
+print(qda.filtered)
+logLoss <- qda.filtered$results[1,2]
+logLoss_StDev <- qda.filtered$results[1,3]
 
 ```
 
-## **Confusion Matrix Table**
-```{r Confusion Matrix Production, echo=F, include=T, warning=F}
+```{r Quadratic Discrim AUC and ROC}
 
-#suppressWarnings(kable(data.frame("Sensitivity" = confusion_matrix_results$byClass[[1]],
-#                 "Specificity" = confusion_matrix_results$byClass[[2]],
-#                 "Pos Pred Value" = confusion_matrix_results$byClass[[3]],
-#                 "Neg Pred Value" = confusion_matrix_results$byClass[[4]],
-#                 "Precision" = confusion_matrix_results$byClass[[5]],
-#                 "Accuracy" = confusion_matrix_results$byClass[[11]],
-#                 "Misclassification" = misclassification.QDA),
-#      format="markdown", booktabs = T)  %>%
-#  kable_styling(position = "center"))
+dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="made",1,0)
+internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
+
+AUCpredStep <- prediction(internal_cv.predicted.qda, dfTrain.numeric$shot_made_flag)
+perf_step <- performance(AUCpredStep, measure = "tpr", x.measure = "fpr")
+plot(perf_step, main = "ROC Curve")
+
+
+AUC <- performance(AUCpredStep, measure = "auc")
+AUC <- auc@y.values[[1]]
+AUC
 
 ```
+
+## **Confusion Matrix & Metrics Table**
+```{r Confusion Matrix and Metrics Table, echo=F, include=T, warning=F}
+
+suppressWarnings(kable(data.frame("Sensitivity" = round(Sensitivity.confusion, digits=5),
+                 "Specificity" = round(Specificity.confusion, digits=5),
+                 "Pos Pred Value" = round(Pos_Pred_Value.confusion, digits=5),
+                 "Neg Pred Value" = round(Neg_Pred_Value.confusion, digits=5),
+                 "Precision" = round(Precision.confusion, digits=5),
+                 "Accuracy" = round(Accuracy.confusion, digits=5),
+                 "Misclassification" = round(misclassification.QDA, digits=5),
+                 "Logarithmic_ _Loss" = round(logLoss, digits=5)),
+      format="latex", booktabs = T)  %>%
+  kable_styling(position = "center"))
+
+```
+
+
 
 # Predictions from Quadratic Discriminant Analysis
 ```{r Predictions from QDA, echo=F, include=T}
-train.Control <- caret::trainControl(method = "repeatedcv",
-                              number = 5,
-                              repeats = 15,
-                              summaryFunction = twoClassSummary,
-                              classProbs = T)
 
-qda.filtered <- train(shot_made_flag ~ .
-                , data = subDF.Train.numeric
-                , method = "qda"
-                , trControl=train.Control
-                , preProcess = c("center", "scale", "spatialSign")
-                #, preProcess = "spatialSign"
-                , metric = "Spec"
-                 )
-
+# Apply the developed model to the external data that needs predictions:
 pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = df.numeric.preds))
 
 df.preds$shot_made_flag <- pred.qda.filtered
 
-write.csv(df.preds, "Predicted_Results.csv", row.names = F)
+#write.csv(df.preds, "Predicted_Results.csv", row.names = F)
 
-confusion_matrix_results.preds <- confusionMatrix(table(test_pred.qda.filtered, df.numeric.preds$shot_made_flag))
-
-misclassification.QDA <- (confusion_matrix_results$table[2,1] + confusion_matrix_results$table[1,2]) / sum(confusion_matrix_results$table)
-kable(misclassification.QDA)
-
-
-test_pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
-
+##############################################################################################################
+##############################################################################################################
+############################################# end of QDA #####################################################
+##############################################################################################################
+##############################################################################################################
 
 ```
+
+
 
 # **Logistic Model Development using Ordinary Least Squares**
 ### A preliminary, manual veriable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.
 ```{r Variable Boundaries Models, echo=F, warning=F}
 model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = df)
 
-model.Allvar <- glm(shot_made_flag ~ recId + combined_shot_type + game_event_id + game_id + loc_x + loc_y +
+model.Allvar <- glm(shot_made_flag ~ recId + combined_shot_type + game_event_id + playoffs + loc_x + loc_y +
                       minutes_remaining + season + seconds_remaining + shot_distance + shot_type + game_date +
                       opponent + shot_id + attendance + arena_temp + avgnoisedb, family=binomial(link='logit'), data = df)
 ```
@@ -417,7 +422,7 @@ summary(forward.glm)
 ```{r akaikes foreward, echo=F, include=T, warning=F}
 
 kable(data.frame("Akaikes Information Criterion: Foreward Selection" = forward.glm$aic),
-      format="markdown", booktabs = T)  %>%
+      format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
 
 ```
@@ -447,7 +452,7 @@ back.glm$aic
 ```{r akaikes backward, echo=F, include=T, warning=F}
 
 kable(data.frame("Akaikes Information Criterion: Backward Elimination" = back.glm$aic),
-      format="markdown", booktabs = T)  %>%
+      format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
 
 ```
@@ -478,7 +483,7 @@ step.glm$aic
 ```{r akaikes, echo=F, include=T, warning=F}
 
 kable(data.frame("Akaikes Information Criterion: Stepwise Regression" = step.glm$aic),
-      format="markdown", booktabs = T)  %>%
+      format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
 
 ```
