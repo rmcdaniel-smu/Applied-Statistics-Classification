@@ -8,8 +8,8 @@ author:
 date: "`r format(Sys.time(), '%d %B %Y')`"
 output:
   pdf_document: default
-  #html_document:
-  #  df_print: paged
+  html_document:
+    df_print: paged
 df_print: paged
 ---
 ```{r Setup and Loading Packages, echo=F, include=F, warning=F}
@@ -98,6 +98,7 @@ tryCatch(
 ## **Addressing Multicollinearity: Correlation Plot for Visual Data Exploration**
 ### To address multicollinearity among quantitative predictor variables, we used a correlation matrix.
 ```{r Multicollinearity, echo=F, include=T, warning=F}
+
 corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
                    , title = "Correlation among Predictor Variables"
                    , type = "lower"
@@ -111,6 +112,7 @@ corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
                    , bg="ivory1"
                    ,tl.srt=.05
 )
+
 ```
 
 ## **Post-Correlation Plot Variable Elimination**
@@ -163,7 +165,8 @@ collinear.correlation <- table(collinear.correlation[order(-collinear.correlatio
 collinear.correlation_Ten <- head(data.frame(collinear.correlation), 10)
 colnames(collinear.correlation_Ten) = c("Row", "Column", "Correlation", "p-value")
 
-kable(collinear.correlation_Ten)
+kable(collinear.correlation_Ten, format="markdown", booktabs = T)  %>%
+  kable_styling(position = "center")
 #write.csv(colinear.correlation, "Collinear_Correlation_Matrix.csv")
 #write.csv(corDF.ordered, "All_Vars_Correlation_Matrix.csv")
 
@@ -233,7 +236,7 @@ kable(data.frame("Chi_Square_Statistic" = dfBartlett$`Chi-Square Statistic`,
                  "Degrees_of_Freedom" = dfBartlett$`Degrees of Freedom`,
                  "Wilks_Lambda" = dfBartlett$`Wilks' Lambda`,
                  "p_value" = Bartletts_p),
-      format="latex", booktabs = T)  %>%
+      format="markdown", booktabs = T)  %>%
   kable_styling(position = "center")
 ```
 
@@ -281,7 +284,7 @@ qda.filtered <- train(shot_made_flag ~ .
                 #, preProcess = "spatialSign"
                 , metric = "logLoss"
                  )
-
+colnames(subDF.Train.numeric)
 # test the model on the 25% partitions from the internal dataset:
 test_pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
 
@@ -327,7 +330,7 @@ kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
 ## **Log Loss**
 ```{r Log Loss Function, echo=F, include=T, warning=F}
 
-print(qda.filtered)
+print(logLoss)
 logLoss <- qda.filtered$results[1,2]
 logLoss_StDev <- qda.filtered$results[1,3]
 
@@ -338,13 +341,13 @@ logLoss_StDev <- qda.filtered$results[1,3]
 dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="made",1,0)
 internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
 
-AUCpredStep <- prediction(internal_cv.predicted.qda, dfTrain.numeric$shot_made_flag)
+AUCpredStep <- prediction(internal_cv.predicted.qda, as.numeric(dfTrain.numeric$shot_made_flag))
 perf_step <- performance(AUCpredStep, measure = "tpr", x.measure = "fpr")
 plot(perf_step, main = "ROC Curve")
 
 
 AUC <- performance(AUCpredStep, measure = "auc")
-AUC <- auc@y.values[[1]]
+AUC <- AUC@y.values[[1]]
 AUC
 
 ```
@@ -360,7 +363,7 @@ suppressWarnings(kable(data.frame("Sensitivity" = round(Sensitivity.confusion, d
                  "Accuracy" = round(Accuracy.confusion, digits=5),
                  "Misclassification" = round(misclassification.QDA, digits=5),
                  "Logarithmic_ _Loss" = round(logLoss, digits=5)),
-      format="latex", booktabs = T)  %>%
+      format="markdown", booktabs = T)  %>%
   kable_styling(position = "center"))
 
 ```
