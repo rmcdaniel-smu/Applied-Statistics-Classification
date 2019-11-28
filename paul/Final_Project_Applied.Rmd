@@ -362,7 +362,8 @@ suppressWarnings(kable(data.frame("Sensitivity" = round(Sensitivity.confusion, d
                  "Precision" = round(Precision.confusion, digits=5),
                  "Accuracy" = round(Accuracy.confusion, digits=5),
                  "Misclassification" = round(misclassification.QDA, digits=5),
-                 "Logarithmic_ _Loss" = round(logLoss, digits=5)),
+                 "Logarithmic_Loss" = round(logLoss, digits=5),
+                 "AUC" = AUC),
       format="markdown", booktabs = T)  %>%
   kable_styling(position = "center"))
 
