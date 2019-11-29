@@ -404,7 +404,7 @@ df.preds$shot_made_flag <- pred.qda.filtered
 
 
 # **Logistic Model Development using Ordinary Least Squares**
-### A preliminary, manual veriable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.
+### A preliminary, manual variable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.
 ```{r Variable Boundaries Models, echo=F, warning=F}
 model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
 
@@ -427,7 +427,7 @@ forward.glm <- glm( shot_made_flag ~ action_type + attendance + shot_zone_range 
     arena_temp + game_event_id + season + seconds_remaining + 
     shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date
                     , family=binomial(link='logit')
-                    , data=df)
+                    , data=dfTrain)
 
 summary(forward.glm)
 ########################################################################
@@ -458,7 +458,7 @@ back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
     shot_type + shot_zone_basic + shot_zone_range + game_date + 
     shot_id + attendance + arena_temp + avgnoisedb
     , family=binomial(link='logit')
-    , data=df)
+    , data=dfTrain)
 
 summary(back.glm)
 back.glm$aic
@@ -488,9 +488,9 @@ model.Stepwise$anova
 step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
     loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
     shot_type + shot_zone_basic + shot_zone_range + game_date + 
-    shot_id + attendance + arena_temp + avgnoisedb
+    shot_id + attendance + arena_temp + avgnoisedb + playoffs
     , family=binomial(link='logit')
-    , data=df)
+    , data=dfTrain)
 
 summary(step.glm)
 step.glm$aic
@@ -506,4 +506,74 @@ kable(data.frame("Akaikes Information Criterion: Stepwise Regression" = step.glm
 
 ```
 
-## **Stepwise Regression - Akaike's Information Criterion for Logistic Regression:**
+#**Cross Validation:**
+```{r Logistic Cross Validation, echo=F, include=T, warning=F}
+#Cross Validation #############################################################################################################
+#Recategorize rare shot types into more common, but similar shot types
+dfTrain$action_type = as.character(dfTrain$action_type)
+dfTrain = dfTrain %>% 
+  mutate(action_type = if_else(action_type == "Running Tip Shot", 'Tip Shot', action_type))%>%
+  mutate(action_type = if_else(action_type == "Tip Layup Shot", 'Tip Shot', action_type)) %>%
+  mutate(action_type = if_else(action_type == "Putback Slam Dunk Shot","Slam Dunk Shot",action_type)) %>%
+  mutate(action_type = if_else(action_type == "Running Slam Dunk Shot","Slam Dunk Shot",action_type))
+dfTrain$action_type = as.factor(dfTrain$action_type)
+
+prediction.Data$action_type = as.character(prediction.Data$action_type)
+prediction.Data = prediction.Data %>% 
+  mutate(action_type = if_else(action_type == "Turnaround Finger Roll Shot", 'Finger Roll Shot', action_type)) %>%
+  mutate(action_type = if_else(action_type == "Putback Slam Dunk Shot",'Slam Dunk Shot',action_type)) %>%
+  mutate(action_type = if_else(action_type == "Running Slam Dunk Shot",'Slam Dunk Shot',action_type))         
+prediction.Data$action_type = as.factor(prediction.Data$action_type)
+
+#K-fold CV
+set.seed(100)
+Train <- createDataPartition(dfTrain$shot_made_flag, p=0.75, list=FALSE)
+training <- dfTrain[ Train, ]
+testing <- dfTrain[ -Train, ]
+
+#train for specficity??? option
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 25,
+                     repeats = 5,
+                     classProbs = T)
+#                     ,metric = "Spec")
+
+#combined shot type used instead of action type - test set has action types that are not in the training set
+
+mod_fit <- train(shot_made_flag ~ recId + action_type + game_event_id + 
+    loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
+    shot_type + shot_zone_basic + shot_zone_range + game_date + 
+    shot_id + attendance + arena_temp + avgnoisedb + playoffs,  data=training, method="glm", family="binomial",
+                 trControl = ctrl, tuneLength = 5)
+
+```
+
+## **Logistic Model Performance:**
+```{r Logistic Model Performance, echo=F, include=T, warning=F}
+
+#confusion matrix https://rpubs.com/dvorakt/255527
+pred = predict(mod_fit, newdata=dfTrain)
+cf = confusionMatrix(table(data=as.numeric(pred>0.5), dfTrain$shot_made_flag))
+misclassificationRate = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
+misclassificationRate
+
+#ROC/AUC
+# Compute AUC for predicting Class with the model
+pred <- prediction(pred, dfTrain$shot_made_flag)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+plot(perf, main = "ROC Curve")
+
+
+auc <- performance(pred, measure = "auc")
+auc <- auc@y.values[[1]]
+auc
+
+#calculate predictions for prediction.Data
+prediction.Data$prob = predict(mod_fit, newdata=prediction.Data)
+logistic_predictions = prediction.Data %>%
+  select(recId,prob)
+write.csv(logistic_predictions,"logistic_predictions.csv")
+```
+
+
+
