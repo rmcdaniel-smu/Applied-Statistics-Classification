@@ -518,12 +518,12 @@ dfTrain = dfTrain %>%
   mutate(action_type = if_else(action_type == "Running Slam Dunk Shot","Slam Dunk Shot",action_type))
 dfTrain$action_type = as.factor(dfTrain$action_type)
 
-prediction.Data$action_type = as.character(prediction.Data$action_type)
-prediction.Data = prediction.Data %>% 
+df.preds$action_type = as.character(df.preds$action_type)
+df.preds = df.preds %>% 
   mutate(action_type = if_else(action_type == "Turnaround Finger Roll Shot", 'Finger Roll Shot', action_type)) %>%
   mutate(action_type = if_else(action_type == "Putback Slam Dunk Shot",'Slam Dunk Shot',action_type)) %>%
   mutate(action_type = if_else(action_type == "Running Slam Dunk Shot",'Slam Dunk Shot',action_type))         
-prediction.Data$action_type = as.factor(prediction.Data$action_type)
+df.preds$action_type = as.factor(df.preds$action_type)
 
 #K-fold CV
 set.seed(100)
@@ -536,7 +536,6 @@ ctrl <- trainControl(method = "repeatedcv",
                      number = 25,
                      repeats = 5,
                      classProbs = T)
-#                     ,metric = "Spec")
 
 #combined shot type used instead of action type - test set has action types that are not in the training set
 
@@ -544,7 +543,7 @@ mod_fit <- train(shot_made_flag ~ recId + action_type + game_event_id +
     loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
     shot_type + shot_zone_basic + shot_zone_range + game_date + 
     shot_id + attendance + arena_temp + avgnoisedb + playoffs,  data=training, method="glm", family="binomial",
-                 trControl = ctrl, tuneLength = 5)
+                 trControl = ctrl, tuneLength = 5, metric = "RMSE")
 
 ```
 
@@ -569,7 +568,7 @@ auc <- auc@y.values[[1]]
 auc
 
 #calculate predictions for prediction.Data
-prediction.Data$prob = predict(mod_fit, newdata=prediction.Data)
+prediction.Data$prob = predict(mod_fit, newdata=df.preds)
 logistic_predictions = prediction.Data %>%
   select(recId,prob)
 write.csv(logistic_predictions,"logistic_predictions.csv")
