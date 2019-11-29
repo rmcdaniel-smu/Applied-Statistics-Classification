@@ -12,6 +12,9 @@ numericVars_clean = kobe_clean %>% keep(is.numeric)
 kobe_clean = kobe_clean %>%
   dplyr::select(-team_id,-team_name, -combined_shot_type, -shot_zone_range,-matchup,-lat,-lon,-period,-game_id)
  
+kobe_predict = kobe_predict%>%
+  dplyr::select(-team_id,-team_name, -combined_shot_type, -shot_zone_range,-matchup,-lat,-lon,-period,-game_id)
+
 #jeffs select(-team_id,-team_name,-matchup,-game_event_id,-game_id,-lat,-lon, - combined_shot_type, -shot_zone_range)
 #paul's  select(-team_id,-team_name,-action_type, -matchup,-shot_zone_area,-shot_zone_basic, -shot_zone_range,-lat,-lon)
 
@@ -50,8 +53,8 @@ testing <- kobe_clean[ -Train, ]
 ctrl <- trainControl(method = "repeatedcv",
                      number = 25,
                      repeats = 5,
-                     classProbs = T,
-                     metric = "Spec")
+                     classProbs = T)
+#                     ,metric = "Spec")
 
 #combined shot type used instead of action type - test set has action types that are not in the training set
 
@@ -75,8 +78,17 @@ testing %>% filter(action_type =='Tip Layup Shot')
 table(testing$action_type)
 
 testing = testing %>% 
-  mutate(action_type = if_else(action_type == "Running Tip Shot", 'Layup Shot', action_type))%>%
-  mutate(action_type = if_else(action_type == "Tip Layup Shot", 'Layup Shot', action_type))
+  mutate(action_type = if_else(action_type == "Running Tip Shot", 'Tip Shot', action_type))%>%
+  mutate(action_type = if_else(action_type == "Tip Layup Shot", 'Tip Shot', action_type)) %>%
+  mutate(action_type = if_else(action_type == "Putback Slam Dunk Shot","Slam Dunk Shot",action_type)) %>%
+  mutate(action_type = if_else(action_type == "Running Slam Dunk Shot","Slam Dunk Shot",action_type))
+
+kobe_predict$action_type = as.character(kobe_predict$action_type)
+kobe_predict = kobe_predict %>% 
+  mutate(action_type = if_else(action_type == "Turnaround Finger Roll Shot", 'Finger Roll Shot', action_type)) %>%
+  mutate(action_type = if_else(action_type == "Putback Slam Dunk Shot",'Slam Dunk Shot',action_type)) %>%
+  mutate(action_type = if_else(action_type == "Running Slam Dunk Shot",'Slam Dunk Shot',action_type))         
+kobe_predict$action_type = as.factor(kobe_predict$action_type)
 
 #confusion matrix https://rpubs.com/dvorakt/255527
 pred = predict(mod_fit, newdata=testing)
@@ -107,14 +119,18 @@ summary(modelFinal)
 #Log Loss Function ##############################################################################################################
 #We may need to change from training to orignal dataset?????
 
+#LOG LOSS AND PREDICTION FOR TRAINING DATA
 training$prob = predict(mod_fit, newdata=training)
 loglossTraining = training %>%
   mutate(logloss = training$shot_made_flag * log(1-training$prob) + (1-training$shot_made_flag)*log(1-training$prob))
 
-#Will generate log loss value
-loglossValue = -1/15523 * sum(loglossTraining$logloss)
-loglossValue
+  #Will generate log loss value
+  loglossValue = -1/15523 * sum(loglossTraining$logloss)
+  loglossValue
 
+  
+#LOG LOSS AND PREDICTION FOR Test DATA
+kobe_predict$prob = predict(mod_fit, newdata=kobe_predict)
 #generate 
 #generate predicitons for whole dataset not just training
 write_csv(training,"predictions.csv")
