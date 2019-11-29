@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.11.28)  28 NOV 2019 11:44
+This is pdfTeX, Version 3.14159265-2.6-1.40.20 (TeX Live 2019) (preloaded format=pdflatex 2019.11.28)  29 NOV 2019 13:50
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -460,6 +460,42 @@ Package: framed 2011/10/22 v 0.96: framed or shaded text with page breaks
 \fb@frh=\dimen125
 \FrameRule=\dimen126
 \FrameSep=\dimen127
+) (/home/pablo/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty
+Package: longtable 2019/02/06 v4.12 Multi-page Table package (DPC)
+\LTleft=\skip48
+\LTright=\skip49
+\LTpre=\skip50
+\LTpost=\skip51
+\LTchunksize=\count116
+\LTcapwidth=\dimen128
+\LT@head=\box30
+\LT@firsthead=\box31
+\LT@foot=\box32
+\LT@lastfoot=\box33
+\LT@cols=\count117
+\LT@rows=\count118
+\c@LT@tables=\count119
+\c@LT@chunks=\count120
+\LT@p@ftn=\toks24
+) (/home/pablo/.TinyTeX/texmf-dist/tex/latex/booktabs/booktabs.sty
+Package: booktabs 2019/10/08 v1.6180339 publication quality tables
+\heavyrulewidth=\dimen129
+\lightrulewidth=\dimen130
+\cmidrulewidth=\dimen131
+\belowrulesep=\dimen132
+\belowbottomsep=\dimen133
+\aboverulesep=\dimen134
+\abovetopsep=\dimen135
+\cmidrulesep=\dimen136
+\cmidrulekern=\dimen137
+\defaultaddspace=\dimen138
+\@cmidla=\count121
+\@cmidlb=\count122
+\@aboverulesep=\dimen139
+\@belowrulesep=\dimen140
+\@thisruleclass=\count123
+\@lastruleclass=\count124
+\@thisrulewidth=\dimen141
 ) (/home/pablo/.TinyTeX/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 2017/06/01 v1.1a Enhanced LaTeX Graphics (DPC,SPQR)
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/graphics/graphics.sty
@@ -471,49 +507,13 @@ File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 )
 Package graphics Info: Driver file: pdftex.def on input line 105.
 )
-\Gin@req@height=\dimen128
-\Gin@req@width=\dimen129
+\Gin@req@height=\dimen142
+\Gin@req@width=\dimen143
 ) (/home/pablo/.TinyTeX/texmf-dist/tex/latex/titling/titling.sty
 Package: titling 2009/09/04 v2.1d maketitle typesetting
-\thanksmarkwidth=\skip48
-\thanksmargin=\skip49
-\droptitle=\skip50
-) (/home/pablo/.TinyTeX/texmf-dist/tex/latex/booktabs/booktabs.sty
-Package: booktabs 2019/10/08 v1.6180339 publication quality tables
-\heavyrulewidth=\dimen130
-\lightrulewidth=\dimen131
-\cmidrulewidth=\dimen132
-\belowrulesep=\dimen133
-\belowbottomsep=\dimen134
-\aboverulesep=\dimen135
-\abovetopsep=\dimen136
-\cmidrulesep=\dimen137
-\cmidrulekern=\dimen138
-\defaultaddspace=\dimen139
-\@cmidla=\count116
-\@cmidlb=\count117
-\@aboverulesep=\dimen140
-\@belowrulesep=\dimen141
-\@thisruleclass=\count118
-\@lastruleclass=\count119
-\@thisrulewidth=\dimen142
-) (/home/pablo/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty
-Package: longtable 2019/02/06 v4.12 Multi-page Table package (DPC)
-\LTleft=\skip51
-\LTright=\skip52
-\LTpre=\skip53
-\LTpost=\skip54
-\LTchunksize=\count120
-\LTcapwidth=\dimen143
-\LT@head=\box30
-\LT@firsthead=\box31
-\LT@foot=\box32
-\LT@lastfoot=\box33
-\LT@cols=\count121
-\LT@rows=\count122
-\c@LT@tables=\count123
-\c@LT@chunks=\count124
-\LT@p@ftn=\toks24
+\thanksmarkwidth=\skip52
+\thanksmargin=\skip53
+\droptitle=\skip54
 ) (/home/pablo/.TinyTeX/texmf-dist/tex/latex/tools/array.sty
 Package: array 2019/08/31 v2.4l Tabular extension package (FMi)
 \col@sep=\dimen144
@@ -631,31 +631,31 @@ Package xcolor Info: Model `wave' substituted by `hsb' on input line 1371.
 ) (./Final_Project_Applied.aux)
 \openout1 = `Final_Project_Applied.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 147.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 148.
 LaTeX Font Info:    Trying to load font information for TS1+cmr on input line 1
-47.
+48.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 147.
-LaTeX Font Info:    ... okay on input line 147.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 148.
+LaTeX Font Info:    ... okay on input line 148.
 LaTeX Font Info:    Trying to load font information for T1+lmr on input line 14
-7.
+8.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/t1lmr.fd
 File: t1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
@@ -694,7 +694,7 @@ File: t1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 * (1in=72.27pt=25.4mm, 1cm=28.453pt)
 
 \AtBeginShipoutBox=\box48
-Package hyperref Info: Link coloring OFF on input line 147.
+Package hyperref Info: Link coloring OFF on input line 148.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/hyperref/nameref.sty
 Package: nameref 2019/09/16 v2.46 Cross-referencing by name of section
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/oberdiek/refcount.sty
@@ -704,9 +704,9 @@ Package: gettitlestring 2016/05/16 v1.5 Cleanup title references (HO)
 )
 \c@section@level=\count137
 )
-LaTeX Info: Redefining \ref on input line 147.
-LaTeX Info: Redefining \pageref on input line 147.
-LaTeX Info: Redefining \nameref on input line 147.
+LaTeX Info: Redefining \ref on input line 148.
+LaTeX Info: Redefining \pageref on input line 148.
+LaTeX Info: Redefining \nameref on input line 148.
 (./Final_Project_Applied.out) (./Final_Project_Applied.out)
 \@outlinefile=\write4
 \openout4 = `Final_Project_Applied.out'.
@@ -727,154 +727,186 @@ File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
 LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-58.
+59.
 (/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/t1lmtt.fd
 File: t1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 
 LaTeX Font Warning: Font shape `T1/lmtt/bx/it' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/sl' tried instead on input line 158.
+(Font)              Font shape `T1/lmtt/b/sl' tried instead on input line 159.
 
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 158.
+(hyperref)                than one, level fixed on input line 159.
 
-<Final_Project_Applied_files/figure-latex/Multicollinearity-1.pdf, id=172, 319.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
+80.
+(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
+File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
+80.
+(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
+File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
+180.
+(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
+File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
+180.
+(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
+File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 180.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 180.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <5> on input line 180.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 180
+.
+(/home/pablo/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 180
+.
+(/home/pablo/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 180.
+<Final_Project_Applied_files/figure-latex/Multicollinearity-1.pdf, id=184, 319.
 1925pt x 286.06876pt>
 File: Final_Project_Applied_files/figure-latex/Multicollinearity-1.pdf Graphic 
 file (type pdf)
 <use Final_Project_Applied_files/figure-latex/Multicollinearity-1.pdf>
 Package pdftex.def Info: Final_Project_Applied_files/figure-latex/Multicollinea
-rity-1.pdf  used on input line 199.
+rity-1.pdf  used on input line 205.
 (pdftex.def)             Requested size: 319.19171pt x 286.06805pt.
 [1
 
 {/home/pablo/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 219.
+Overfull \vbox (20.651pt too high) has occurred while \output is active []
+
 [2 <./Final_Project_Applied_files/figure-latex/Multicollinearity-1.pdf>]
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 2
-35.
-(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/ot1lmr.fd
-File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 2
-35.
-(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omllmm.fd
-File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-235.
-(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omslmsy.fd
-File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-235.
-(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/omxlmex.fd
-File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 235.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 235.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 235.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 235
-.
-(/home/pablo/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 235
-.
-(/home/pablo/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 275.
+(hyperref)                than one, level fixed on input line 283.
 
-[3]
+LaTeX Font Info:    Trying to load font information for TS1+lmtt on input line 
+292.
+(/home/pablo/.TinyTeX/texmf-dist/tex/latex/lm/ts1lmtt.fd
+File: ts1lmtt.fd 2009/10/30 v1.6 Font defs for Latin Modern
+) [3pdfTeX warning (ext4): destination with the same identifier (name{table.1})
+ has been already used, duplicate ignored
 
-Package xcolor Warning: Incompatible color definition on input line 352.
+\AtBegShi@Output ...ipout \box \AtBeginShipoutBox 
+                                                  \fi \fi 
+l.302 
+      ]
+LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <12> not available
+(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 316.
+[4]
+
+Package xcolor Warning: Incompatible color definition on input line 379.
 
 
-Package xcolor Warning: Incompatible color definition on input line 361.
+Package xcolor Warning: Incompatible color definition on input line 389.
 
 
-Package xcolor Warning: Incompatible color definition on input line 361.
+Package xcolor Warning: Incompatible color definition on input line 389.
 
 <Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-1.pdf, 
-id=219, 440.64626pt x 286.06876pt>
+id=248, 440.64626pt x 286.06876pt>
 File: Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-1.
 pdf Graphic file (type pdf)
 <use Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-1.p
 df>
 Package pdftex.def Info: Final_Project_Applied_files/figure-latex/Quadratic Dis
-crim AUC and ROC-1.pdf  used on input line 363.
+crim AUC and ROC-1.pdf  used on input line 391.
 (pdftex.def)             Requested size: 440.65189pt x 286.07242pt.
 
-Package xcolor Warning: Incompatible color definition on input line 365.
-
-[4]
-
-Package xcolor Warning: Incompatible color definition on input line 371.
+Package xcolor Warning: Incompatible color definition on input line 393.
 
 
-Package xcolor Warning: Incompatible color definition on input line 371.
+Package xcolor Warning: Incompatible color definition on input line 405.
 
 
-Overfull \hbox (131.05177pt too wide) in paragraph at lines 383--390
- [][] 
- []
+Package xcolor Warning: Incompatible color definition on input line 405.
 
+<Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-2.pdf, 
+id=249, 440.64626pt x 286.06876pt>
+File: Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-2.
+pdf Graphic file (type pdf)
+<use Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-2.p
+df>
+Package pdftex.def Info: Final_Project_Applied_files/figure-latex/Quadratic Dis
+crim AUC and ROC-2.pdf  used on input line 407.
+(pdftex.def)             Requested size: 440.65189pt x 286.07242pt.
+
+Package xcolor Warning: Incompatible color definition on input line 409.
+
+[5 <./Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-1.
+pdf>]
+
+Package xcolor Warning: Incompatible color definition on input line 414.
+
+
+Package xcolor Warning: Incompatible color definition on input line 414.
+
+[6 <./Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-2.
+pdf>]
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 408.
+(hyperref)                than one, level fixed on input line 470.
 
 
-Underfull \hbox (badness 2894) in paragraph at lines 426--426
+Underfull \hbox (badness 2894) in paragraph at lines 488--488
 [][]$\OML/lmm/m/it/10 shot[]adeflag \OT1/lmr/m/n/10 = \OML/lmm/m/it/10 shotdist
 ance \OT1/lmr/m/n/10 + \OML/lmm/m/it/10 attendance \OT1/lmr/m/n/10 + \OML/lmm/m
 /it/10 combinedshottype \OT1/lmr/m/n/10 + \OML/lmm/m/it/10 arenatemp \OT1/lmr/m
 /n/10 + \OML/lmm/m/it/10 gameeventid \OT1/lmr/m/n/10 +
  []
 
-[5 <./Final_Project_Applied_files/figure-latex/Quadratic Discrim AUC and ROC-1.
-pdf>] [6]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 515.
 [7]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 515.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 577.
+[8]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 577.
 (./Final_Project_Applied.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 515.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 515.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 577.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 577.
 Package rerunfilecheck Info: File `Final_Project_Applied.out' has not changed.
-(rerunfilecheck)             Checksum: E623BCCE3203DF5555E5339DC01ED01B;28766.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 515.
+(rerunfilecheck)             Checksum: 72F898DDF2FBDE2CBC20E4DB2658AAE3;37523.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 577.
  ) 
 Here is how much of TeX's memory you used:
- 13061 strings out of 494108
- 191650 string characters out of 6173989
- 305320 words of memory out of 5000000
- 16827 multiletter control sequences out of 15000+600000
- 47248 words of font info for 44 fonts, out of 8000000 for 9000
+ 13131 strings out of 494108
+ 196108 string characters out of 6173989
+ 301033 words of memory out of 5000000
+ 16880 multiletter control sequences out of 15000+600000
+ 48190 words of font info for 47 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 39i,9n,37p,4523b,341s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-rm.enc}{/home/pablo/.T
-inyTeX/texmf-dist/fonts/enc/dvips/lm/lm-mathit.enc}{/home/pablo/.TinyTeX/texmf-
-dist/fonts/enc/dvips/lm/lm-ec.enc}</home/pablo/.TinyTeX/texmf-dist/fonts/type1/
-public/lm/lmbx10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmb
-x12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></ho
-me/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></home/pablo/.Tin
-yTeX/texmf-dist/fonts/type1/public/lm/lmmi7.pfb></home/pablo/.TinyTeX/texmf-dis
-t/fonts/type1/public/lm/lmr10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/
-public/lm/lmr17.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri
-12.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></home
-/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtko10.pfb></home/pablo/.Tiny
-TeX/texmf-dist/fonts/type1/public/lm/lmtt10.pfb>
-Output written on Final_Project_Applied.pdf (7 pages, 287696 bytes).
+ 39i,9n,37p,4523b,443s stack positions out of 5000i,500n,10000p,200000b,80000s
+{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ec.enc}{/home/pablo/.T
+inyTeX/texmf-dist/fonts/enc/dvips/lm/lm-ts1.enc}{/home/pablo/.TinyTeX/texmf-dis
+t/fonts/enc/dvips/lm/lm-rm.enc}{/home/pablo/.TinyTeX/texmf-dist/fonts/enc/dvips
+/lm/lm-mathit.enc}</home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx10
+.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbx12.pfb></home/p
+ablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmbxi10.pfb></home/pablo/.TinyTe
+X/texmf-dist/fonts/type1/public/lm/lmmi10.pfb></home/pablo/.TinyTeX/texmf-dist/
+fonts/type1/public/lm/lmmi7.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/pu
+blic/lm/lmr10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmr17.
+pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmri12.pfb></home/pa
+blo/.TinyTeX/texmf-dist/fonts/type1/public/lm/lmtk10.pfb></home/pablo/.TinyTeX/
+texmf-dist/fonts/type1/public/lm/lmtko10.pfb></home/pablo/.TinyTeX/texmf-dist/f
+onts/type1/public/lm/lmtt10.pfb></home/pablo/.TinyTeX/texmf-dist/fonts/type1/pu
+blic/lm/lmtti10.pfb>
+Output written on Final_Project_Applied.pdf (8 pages, 312325 bytes).
 PDF statistics:
- 339 PDF objects out of 1000 (max. 8388607)
- 309 compressed objects within 4 object streams
- 92 named destinations out of 1000 (max. 500000)
- 347 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 378 PDF objects out of 1000 (max. 8388607)
+ 343 compressed objects within 4 object streams
+ 102 named destinations out of 1000 (max. 500000)
+ 376 words of extra memory for PDF output out of 10000 (max. 10000000)
 

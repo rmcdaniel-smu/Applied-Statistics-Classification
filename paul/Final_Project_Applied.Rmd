@@ -30,7 +30,7 @@ sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 # **Exploratory Data Analysis**
 
 ## **Outlier Check**
-### First, we performed a brief outlier check indicated a 2PT Field Goal was noted from the 3PT (3-point) range. Regardless of the actual score, the location matters more. Therefore, after confirming these values to be within 3PT-range, all shots will be encoded as 3-point once beyond 300 inches.
+### First, we performed a brief outlier check, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
 ```{r outlier check, echo=F, include= F, warning=F}
 # unlist shot data, save into a data frame
 shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
@@ -163,11 +163,14 @@ collinear.correlation <- corDF[which(corDF$cor >= 0.50),]
 
 collinear.correlation <- table(collinear.correlation[order(-collinear.correlation$cor),])
 collinear.correlation_Ten <- head(data.frame(collinear.correlation), 10)
-colnames(collinear.correlation_Ten) = c("Row", "Column", "Correlation", "p-value")
+collinear.correlation_Ten <- collinear.correlation_Ten[,1:4]
+colnames(collinear.correlation_Ten) = c("Correlation Predictor Variable", "Correlation Response Variable", "Correlation", "p-Value")
 
-#data.frame(collinear.correlation_Ten)
+collinear.correlation_Ten$Correlation <- round(as.numeric(as.character(collinear.correlation_Ten$Correlation)), digits=5)
 
-kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
+collinear.correlation_Ten$`p-Value` <- ifelse(as.numeric(as.character(collinear.correlation_Ten$`p-Value`)) < 0.0001, "p < 0.0001", as.numeric(as.character(collinear.correlation_Ten$`p-Value`)))
+
+kable(collinear.correlation_Ten, caption = "Top 10 Collinear Terms", format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
 
 #########
@@ -194,9 +197,8 @@ subDF.Test <- dfTrain[-train_ind, ] # 25% testing
 # **Quadratic Discriminant Analysis**
 ### As requested within the requirements of this study, a Linear Discriminant Analysis must be assessed and provided. Discriminant analysis is an operation that compares a categorical response variable against measures of quantitative predictor variables. As a result, analysis for this section is performed on the numerical predictors, which include `recId`, `game_event_id`, `game_id`, `loc_x`, `loc_y`, `minutes_remaining`, `seconds_remaining`, `shot_distance`, `shot_made_flag`, `shot_type`, `game_date`, `shot_id`, `attendance`, `arena_temp`, `avgnoisedb`, controlling collinearity by eliminating a member of each collinear pair prior to model development.
 ###
-###Linear Discriminant Analysis requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, Quadratic Discriminant Analysis must be used. Wilks' Lambda distribution is used to assess the nature of boundary linearity, which can be used for discriminant analysis. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used. Bartlett's Test is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the Chi-Square distribution. Provided is a test statistic and p-value.
-
-### **Bartlett's Test:**
+###`Linear Discriminant Analysis` requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, `Quadratic Discriminant Analysis` must be used. `Wilks' Lambda` distribution is used to assess the nature of boundary linearity, which is a required understanding to develop a well-fit discriminant classification model. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used, rather than Wilks' Lambda itself. `Bartlett's Test` is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the `Chi-Square distribution`. This method is applied herein to assess linearity.
+## **Bartlett's Test:**
 ```{r Quadratic Discriminant Analysis: Test Identification, echo=F, include=F, warning=F}
 
 dfTrain.numeric <- df.numeric[which(!is.na(df.numeric$shot_made_flag)),]
@@ -233,27 +235,26 @@ Bartletts_p = ifelse(Bartlett_ChiSq$p.value < 0.0001, "p < 0.0001", Bartlett_Chi
 #Bartletts_p <- "p < 0.0001"
 
 dfBartlett <- data.frame(WilksDegreesofFreedom, Bartlett_ChiSq$wilks, Bartletts_p)
-colnames(dfBartlett) <- c("Chi-Square Statistic", "Degrees of Freedom", "Wilks' Lambda", "p-value")
+colnames(dfBartlett) <- c("Chi-Square Statistic", "Degrees of Freedom", "Wilks' Lambda", "p-Value")
 
 ```
-
+## The result of this test returned statistically significant results, indicating the null hypothesis of linearity must be rejected in favor of the alternate, which is that the discriminant boundary is non-linear. Consequently, we proceed with a model based on `Quadratic Discriminant Analysis` to provide predictive responses from a discriminant model. However, we proceed with caution, as the quadratic version of the discriminant analysis is at greater risk for over-fitting to the data than Linear Discriminant Analysis as the boundary is required to conform more closely to the data rather than to the mean of the data. This was also taken into consideration when assessing the results of the Logistic Regression model development that occurs afterward.
 ```{r Bartletts Resutls, echo=F, include=T, warning=F}
+dfBartlett$`Chi-Square Statistic` <- round(as.numeric(as.character(dfBartlett$`Chi-Square Statistic`)), digits=5)
+dfBartlett$`Wilks' Lambda` <- round(as.numeric(as.character(dfBartlett$`Wilks' Lambda`)), digits=5)
 
-kable(data.frame("Chi_Square_Statistic" = dfBartlett$`Chi-Square Statistic`,
-                 "Degrees_of_Freedom" = dfBartlett$`Degrees of Freedom`,
-                 "Wilks_Lambda" = dfBartlett$`Wilks' Lambda`,
-                 "p_value" = Bartletts_p),
+bartlettsTest <- data.frame(rbind(dfBartlett$`Chi-Square Statistic`,dfBartlett$`Degrees of Freedom`,dfBartlett$`Wilks' Lambda`,Bartletts_p))
+rownames(bartlettsTest) <- c("Chi Square Statistic","Degrees of Freedom","Wilks' Lambda","p-Value")
+colnames(bartlettsTest) <- "Bartlett Test's Wilks' Lambda Approximation"
+
+kable(bartlettsTest,
       format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
-
-#data.frame(dfBartlett$`Chi-Square Statistic`, dfBartlett$`Degrees of Freedom`, dfBartlett$`Wilks' Lambda`, Bartletts_p)
-
 
 ```
 
 ### Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
-
-```{r Quadratic Discriminant Analysis: Test Production, echo=F, warning=F, include=T}
+```{r Quadratic Discriminant Analysis: Test Production, echo=F, warning=F, include=F}
 ##################################################################################################
 ##################################################################################################
 ##################################################################################################
@@ -266,14 +267,17 @@ data.frame(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
 
 shot_made_flag_Posterior <- rbind("0", "1")
 proportion_Posterior <- rbind(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
-data.frame(shot_made_flag_Posterior, proportion_Posterior)
+priori <- data.frame(shot_made_flag_Posterior, proportion_Posterior)
 
 
 
 ##################################################################################################
 ##################################################################################################
 ##################################################################################################
+```
 
+## Internal Cross-Valdiation and Model Development
+```{r Model Development & Internal Cross-Validation, echo=F, include=F, warning=F}
 subDF.Train.numeric$shot_made_flag <- as.factor(subDF.Train.numeric$shot_made_flag)
 #subDF.Train.numeric$shot_made_flag <- ifelse(subDF.Train.numeric$shot_made_flag=="1", "made", "not_made")
 subDF.Train.numeric <- subDF.Train.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
@@ -297,44 +301,63 @@ qda.filtered <- train(shot_made_flag ~ .
                  )
 
 # test the model on the 25% partitions from the internal dataset:
-test_pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
+internal_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
 
 # build a confusion matrix for internal cross-validation to see performance:
-confusion_matrix_results.test <- confusionMatrix(table(test_pred.qda.filtered, subDF.Test.numeric$shot_made_flag))
+confusion_matrix_results.internal<- confusionMatrix(table(internal_cv.predicted.qda, subDF.Test.numeric$shot_made_flag))
 
 ```
 
-
-```{r Predicting Internal Data for Model Metrics, echo=F, include=T, warning=F}
+## External Cross-Validation
+### After building a model using internal cross-validation, which applied 5 repeated cross-validations across 25 folds of the data, a confusion matrix was constructed and analyzed. Next, we used the model to make predictions against the entire portion of the dataset that included values for `shot_made_flag` to assess how closely the model can predict against the entire data set compared to the actuals.
+Although the confusion matrix was performed using internal cross validation.....this section needs to be removed:
+```{r Predicting Internal Data for Model Metrics, echo=F, include=F, warning=F}
 
 # apply the model developed above to the entire (75 + 25 = 100%) internal dataset. In other words, make predictions on the data that has results so they can be compared (no folds, no repeats this time):
-internal_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = dfTrain.numeric))
+external_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = dfTrain.numeric))
 
 # compare the predicted results to the actual results to make sure model still performs as intended:
-confusion_matrix_results.internal <- confusionMatrix(table(internal_cv.predicted.qda, dfTrain.numeric$shot_made_flag))
+confusion_matrix_results.external <- confusionMatrix(table(external_cv.predicted.qda, dfTrain.numeric$shot_made_flag))
 
 ```
 
 ```{r Gathering Specificity, Sensitivity, Accuracty from Confusion Matrix, echo=F, includ=F, warning=F}
 
-SpecSense.confusion <- data.frame(confusion_matrix_results.internal$byClass)
-AccuracyP.confusion <- data.frame(confusion_matrix_results.internal$overall)
+######### Internal Cross-Validation Metrics
+SpecSense.confusion.internal <- data.frame(confusion_matrix_results.internal$byClass)
+AccuracyP.confusion.internal <- data.frame(confusion_matrix_results.internal$overall)
 
-Accuracy.confusion <- AccuracyP.confusion[1,]
-Sensitivity.confusion <- SpecSense.confusion[1,]
-Specificity.confusion <- SpecSense.confusion[2,]
-Pos_Pred_Value.confusion <- SpecSense.confusion[3,]
-Neg_Pred_Value.confusion <- SpecSense.confusion[4,]
-Precision.confusion <- SpecSense.confusion[5,]
+Accuracy.confusion.internal <- AccuracyP.confusion.internal[1,]
+Sensitivity.confusion.internal <- SpecSense.confusion.internal[1,]
+Specificity.confusion.internal <- SpecSense.confusion.internal[2,]
+Pos_Pred_Value.confusion.internal <- SpecSense.confusion.internal[3,]
+Neg_Pred_Value.confusion.internal <- SpecSense.confusion.internal[4,]
+Precision.confusion.internal <- SpecSense.confusion.internal[5,]
+
+######### External Cross-Validation Metrics
+SpecSense.confusion.external <- data.frame(confusion_matrix_results.external$byClass)
+AccuracyP.confusion.external <- data.frame(confusion_matrix_results.external$overall)
+
+Accuracy.confusion.external <- AccuracyP.confusion.external[1,]
+Sensitivity.confusion.external <- SpecSense.confusion.external[1,]
+Specificity.confusion.external <- SpecSense.confusion.external[2,]
+Pos_Pred_Value.confusion.external <- SpecSense.confusion.external[3,]
+Neg_Pred_Value.confusion.external <- SpecSense.confusion.external[4,]
+Precision.confusion.external <- SpecSense.confusion.external[5,]
 
 ```
 
 ## **Quadratic Discriminant Analysis Misclassification Rate**
 ```{r Misclassification Calculated from Full Internal Dataset, echo=F, include=T, warning=F}
 
-misclassification.QDA <- (confusion_matrix_results.internal$table[2,1] + confusion_matrix_results.internal$table[1,2]) / sum(confusion_matrix_results.internal$table)
+misclassification.QDA.external <- (confusion_matrix_results.external$table[2,1] + confusion_matrix_results.external$table[1,2]) / sum(confusion_matrix_results.external$table)
 
-kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
+misclassification.QDA.internal <- (confusion_matrix_results.internal$table[2,1] + confusion_matrix_results.internal$table[1,2]) / sum(confusion_matrix_results.internal$table)
+
+#misclass <- paste0(round(misclassification.QDA*100, digits=3), "%", sep="")
+#misclass <- data.frame(misclass)
+#colnames(misclass) <- "Misclassification"
+#kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
 
 #data.frame(misclassification.QDA)
 
@@ -344,7 +367,7 @@ kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
 ```{r Log Loss Function, echo=F, include=T, warning=F}
 
 print(logLoss)
-logLoss <- qda.filtered$results[1,2]
+logLoss.quadratic <- qda.filtered$results[1,2]
 logLoss_StDev <- qda.filtered$results[1,3]
 
 ```
@@ -352,35 +375,50 @@ logLoss_StDev <- qda.filtered$results[1,3]
 ```{r Quadratic Discrim AUC and ROC}
 
 dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="made",1,0)
+### Internal Cross-Validation
 internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
 
-AUCpredStep <- prediction(internal_cv.predicted.qda, as.numeric(dfTrain.numeric$shot_made_flag))
-perf_step <- performance(AUCpredStep, measure = "tpr", x.measure = "fpr")
-plot(perf_step, main = "ROC Curve")
+AUCpredStep.internal <- prediction(internal_cv.predicted.qda, as.numeric(subDF.Test.numeric$shot_made_flag))
+perf_step.internal <- performance(AUCpredStep.internal, measure = "tpr", x.measure = "fpr")
+plot(perf_step.internal, main = "ROC Curve")
 
+AUC.internal <- performance(AUCpredStep.internal, measure = "auc")
+AUC.internal <- AUC.internal@y.values[[1]]
 
-AUC <- performance(AUCpredStep, measure = "auc")
-AUC <- AUC@y.values[[1]]
-AUC
+### External Cross-Validation
+external_cv.predicted.qda <- ifelse(external_cv.predicted.qda=="made",1,0)
+
+AUCpredStep.external <- prediction(external_cv.predicted.qda, as.numeric(dfTrain.numeric$shot_made_flag))
+perf_step.external <- performance(AUCpredStep.external, measure = "tpr", x.measure = "fpr")
+plot(perf_step.external, main = "ROC Curve")
+
+AUC.external <- performance(AUCpredStep.external, measure = "auc")
+AUC.external <- AUC.external@y.values[[1]]
 
 ```
 
 ## **Confusion Matrix & Metrics Table**
 ```{r Confusion Matrix and Metrics Table, echo=F, include=T, warning=F}
 
-suppressWarnings(kable(data.frame("Sensitivity" = round(Sensitivity.confusion, digits=5),
-                 "Specificity" = round(Specificity.confusion, digits=5),
-                 "Pos Pred Value" = round(Pos_Pred_Value.confusion, digits=5),
-                 "Neg Pred Value" = round(Neg_Pred_Value.confusion, digits=5),
-                 "Precision" = round(Precision.confusion, digits=5),
-                 "Accuracy" = round(Accuracy.confusion, digits=5),
-                 "Misclassification" = round(misclassification.QDA, digits=5),
-                 "Logarithmic_Loss" = round(logLoss, digits=5),
-                 "AUC" = AUC),
-      format="latex", booktabs = T)  %>%
+### Internal Cross-Validation Confusion Matrix
+confusionFrame.internal <- data.frame(rbind(round(Sensitivity.confusion.internal, digits=5),round(Specificity.confusion.internal, digits=5),round(Pos_Pred_Value.confusion.internal, digits=5),round(Neg_Pred_Value.confusion.internal, digits=5),round(Precision.confusion.internal, digits=5),round(Accuracy.confusion.internal, digits=5),round(misclassification.QDA.internal, digits=5),round(logLoss.quadratic, digits=5),round(AUC.internal, digits=5)))
+
+rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Pos Pred Value","Neg Pred Value","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+colnames(confusionFrame.internal) <- "Internal CV Statistics"
+
+suppressWarnings(kable(confusionFrame.internal,
+      format="markdown", booktabs = T)  %>%
   kable_styling(position = "center"))
 
-#data.frame(round(Sensitivity.confusion, digits=5), round(Specificity.confusion, digits=5), round(Pos_Pred_Value.confusion, digits=5), round(Neg_Pred_Value.confusion, digits=5), round(Precision.confusion, digits=5), round(Accuracy.confusion, digits=5), round(misclassification.QDA, digits=5), round(logLoss, digits=5),AUC)
+### External Cross-Validation Confusion Matrix
+confusionFrame.external <- data.frame(rbind(round(Sensitivity.confusion.external, digits=5),round(Specificity.confusion.external, digits=5),round(Pos_Pred_Value.confusion.external, digits=5),round(Neg_Pred_Value.confusion.external, digits=5),round(Precision.confusion.external, digits=5),round(Accuracy.confusion.external, digits=5),round(misclassification.QDA.external, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
+
+rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Pos Pred Value","Neg Pred Value","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+colnames(confusionFrame.external) <- "External CV Statistics"
+
+suppressWarnings(kable(confusionFrame.external,
+      format="markdown", booktabs = T)  %>%
+  kable_styling(position = "center"))
 
 ```
 
