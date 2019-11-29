@@ -1,0 +1,509 @@
+---
+title: 'Will Kobe Bryant Make His Next Shot:  Linear Discriminant Analysis and Logistic Regression using R'
+author:
+- Paul Adams
+- Reannan McDaniel
+- Jeff Nguyen
+- Southern Methodist University
+date: "`r format(Sys.time(), '%d %B %Y')`"
+output:
+  pdf_document: default
+  #html_document:
+   # df_print: paged
+df_print: paged
+---
+```{r Setup and Loading Packages, echo=F, include=F, warning=F}
+
+library(pacman)
+p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics, tinytex)
+#install_tinytex() #if you do not already have this, you will need to install it to run the latex file. Additionally, install MikTex
+
+df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
+
+df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
+
+sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
+
+```
+# **Abstract:**  
+### *This project investigates the correlation between multiple potential explanatory variables and Kobe Bryant's ability to make a shot while playing for the NBA team Los Angeles Lakers using data gathered from `1996`-`2015`.*
+
+# **Exploratory Data Analysis**
+
+## **Outlier Check**
+### First, we performed a brief outlier check indicated a 2PT Field Goal was noted from the 3PT (3-point) range. Regardless of the actual score, the location matters more. Therefore, after confirming these values to be within 3PT-range, all shots will be encoded as 3-point once beyond 300 inches.
+```{r outlier check, echo=F, include= F, warning=F}
+# unlist shot data, save into a data frame
+shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
+
+colnames(shotsTaken) <- c("loc_x", "loc_y", "shot_distance")
+
+# simple plot using EVENT_TYPE to colour the dots
+ggplot(shotsTaken, aes(x=loc_x, y=loc_y)) + 
+  geom_point(aes(colour = df$shot_type))
+
+df[which(df$loc_y > 300),"shot_type"] <- "3PT Field Goal"
+df.preds[which(df.preds$loc_y > 300),"shot_type"] <- "3PT Field Goal"
+
+# Convert the points to integer values since they have integer value in reality
+df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
+df.preds$shot_type <- ifelse(df.preds$shot_type=="2PT Field Goal", 2, 3)
+
+```
+
+## **Variable Elimination**
+### Next, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
+```{r Transformations Phase Two, echo=F, warning=F}
+
+tryCatch(
+    {
+    # Convert all integers to numeric and characters to factors with levels:
+    df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+    df <- df %>% 
+      subset(select=-c(team_id, # dropping since this is a uniform distribution of data
+                       team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
+                       combined_shot_type, # dropping this in favor of action_type
+                       shot_zone_area, # this is ambiguous and less descriptive than geospatial data
+                       matchup # removing in favor of opponent; Kobe only played for LAL so that will never change
+                      )
+              )
+    # create numeric dataframe for correlation plot
+    df.numeric <- df %>% keep(is.numeric)
+    
+    df.preds <- df.preds %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+    df.preds <- df.preds %>% 
+      subset(select=-c(team_id, # dropping since this is a uniform distribution of data
+                       team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
+                       combined_shot_type, # dropping this in favor of action_type
+                       shot_zone_area, # this is ambiguous and less descriptive than geospatial data
+                       matchup # removing in favor of opponent; Kobe only played for LAL so that will never change
+                      )
+              )
+    # create numeric dataframe for correlation plot
+    df.numeric.preds <- df.preds %>% keep(is.numeric)
+    },
+    error = function(e)
+    {
+      e
+    }
+)
+
+```
+
+
+
+## **Addressing Multicollinearity: Correlation Plot for Visual Data Exploration**
+### To address multicollinearity among quantitative predictor variables, we used a correlation matrix.
+```{r Multicollinearity, echo=F, include=T, warning=F}
+
+corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
+                   , title = "Correlation among Predictor Variables"
+                   , type = "lower"
+                   , tl.pos = "ld"
+                   , method = "square"
+                   , tl.cex = 0.65
+                   , tl.col = 'red'
+                   , order = "alphabet"
+                   , diag = F
+                   , mar=c(0,0,5,0)
+                   , bg="ivory1"
+                   ,tl.srt=.05
+)
+
+```
+
+## **Post-Correlation Plot Variable Elimination**
+### Following our correlation plot, we decided to eliminate some collinear terms. However, some of the collinearity is useful to capture the instances where the terms are unique. For example, `combined_shot_type` (factor variable) is collinear with `shot_distance` (quantitative variable), but it also accounts for the method Kobe may use to make a shot. For example, distance may be relatively the same between 10 and 11 feet, but the factor levels used to derrive their `short` or `far` indications may differ. This difference could be whether Kobe makes a potentially more accurate heel-planted shot or if he is forced to lean forward and take a riskier shot at basket; the difference in distance may only be one foot, but the difference in technique could measure significant relative to the odds of success.
+```{r Post-Correlation Plot Variable Elimination, echo=F, warning=F}
+
+df <- df %>% subset(select=-c(lat, # dropping lat because it is collinear with loc_y and shot_distance
+                              lon, # dropping lon because it is collinear with loc_x and shot_distance
+                              period, # dropping period in favor of game event id because game event id is more descriptive and continuous
+                              game_id # dropping playoffs for game_id; game ID can capture playoffs seasonally
+                             )
+                    )
+
+df.preds <- df.preds %>% subset(select=-c(lat, # dropping lat because it is collinear with loc_y and shot_distance
+                              lon, # dropping lon because it is collinear with loc_x and shot_distance
+                              period, # dropping period in favor of game event id because game event id is more descriptive and continuous
+                              game_id # dropping playoffs for game_id; game ID can capture playoffs seasonally
+                             )
+                    )
+
+df.numeric <- df %>% keep(is.numeric) %>% mutate_if(is.integer, as.numeric)
+df.numeric.preds <- df.preds %>% keep(is.numeric) %>% mutate_if(is.integer, as.numeric)
+
+```
+
+## **Addressing Multicollinearity: Correlation Matrix for Numerical Analysis**
+###Following the removal of the most obvious collinear terms visually performing a correlation plot analysis, a correlation matrix for analyzing the remaining results. Collinear quantitative data was preliminarily removed following correlation plot analysis to desaturate the model to an extent that allows more distinction among significance measures for terms in the correlation matrix.
+```{r Correlation Matrix for Quantitative Data, echo=F, include=T, warning=F}
+flattenCorrMatrix <- function(cormatrix, pmatrix) {
+  ut <- upper.tri(cormatrix)
+  data.frame(
+    row = rownames(cormatrix)[row(cormatrix)[ut]],
+    column = rownames(cormatrix)[col(cormatrix)[ut]],
+    cor  =(cormatrix)[ut],
+    p = pmatrix[ut]
+  )
+}
+
+options(scipen=999)
+options(max.print=100000)
+
+#See what variables are correlated with eachother, p-values
+correlation.matrix <- Hmisc::rcorr(as.matrix(df.numeric), type="pearson")
+corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
+
+corDF.ordered <- data.frame(corDF[order(-corDF$cor),])
+collinear.correlation <- corDF[which(corDF$cor >= 0.50),]
+
+collinear.correlation <- table(collinear.correlation[order(-collinear.correlation$cor),])
+collinear.correlation_Ten <- head(data.frame(collinear.correlation), 10)
+colnames(collinear.correlation_Ten) = c("Row", "Column", "Correlation", "p-value")
+
+#data.frame(collinear.correlation_Ten)
+
+kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+
+#########
+#write.csv(colinear.correlation, "Collinear_Correlation_Matrix.csv")
+#write.csv(corDF.ordered, "All_Vars_Correlation_Matrix.csv")
+
+```
+
+
+# After the first round of 
+```{r Make Train and Test Data, echo=F, include=F, warning=F}
+
+dfTrain <- df[which(!is.na(df$shot_made_flag)),]
+prediction.Data <- df[which(is.na(df$shot_made_flag)),]
+
+test_sample_size <- floor(0.75 * nrow(dfTrain))
+set.seed(123)
+train_ind <- sample(seq_len(nrow(dfTrain)), size = test_sample_size)
+subDF.Train <- dfTrain[train_ind, ] #75% training
+subDF.Test <- dfTrain[-train_ind, ] # 25% testing
+
+```
+
+# **Quadratic Discriminant Analysis**
+### As requested within the requirements of this study, a Linear Discriminant Analysis must be assessed and provided. Discriminant analysis is an operation that compares a categorical response variable against measures of quantitative predictor variables. As a result, analysis for this section is performed on the numerical predictors, which include `recId`, `game_event_id`, `game_id`, `loc_x`, `loc_y`, `minutes_remaining`, `seconds_remaining`, `shot_distance`, `shot_made_flag`, `shot_type`, `game_date`, `shot_id`, `attendance`, `arena_temp`, `avgnoisedb`, controlling collinearity by eliminating a member of each collinear pair prior to model development.
+###
+###Linear Discriminant Analysis requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, Quadratic Discriminant Analysis must be used. Wilks' Lambda distribution is used to assess the nature of boundary linearity, which can be used for discriminant analysis. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used. Bartlett's Test is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the Chi-Square distribution. Provided is a test statistic and p-value.
+
+### **Bartlett's Test:**
+```{r Quadratic Discriminant Analysis: Test Identification, echo=F, include=F, warning=F}
+
+dfTrain.numeric <- df.numeric[which(!is.na(df.numeric$shot_made_flag)),]
+prediction.Data.numeric <- df.numeric[which(is.na(df.numeric$shot_made_flag)),]
+
+dfTrain.numeric$shot_made_flag <- as.factor(dfTrain.numeric$shot_made_flag)
+dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="1", "made", "not_made")
+dfTrain.numeric <- dfTrain.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+
+########################################## create test and train data sets
+test_sample_size <- floor(0.75 * nrow(dfTrain.numeric))
+set.seed(123)
+train_ind <- sample(seq_len(nrow(dfTrain.numeric)), size = test_sample_size)
+subDF.Train.numeric <- dfTrain.numeric[train_ind, ] #75% training
+subDF.Test.numeric <- dfTrain.numeric[-train_ind, ] # 25% testing
+
+###########################################################################
+
+
+Bartlett_ChiSq <- rrcov::Wilks.test(shot_made_flag ~ ., data=dfTrain.numeric, method = "c", approximation = "Bartlett")
+
+# Wilk's Lambda produces significant p-value in Bartlett's test so we need to use a Quadratic Discriminant Analysis instead of Linear
+format(round(Bartlett_ChiSq$p.value, 2), nsmall=4)
+
+# Wilks' Lambda plus degrees of freedom used in Bartlett's chi-squared test
+WilksDegreesofFreedom <- rbind(as.numeric(paste0(Bartlett_ChiSq$parameter, sep = " ")))
+
+# p-value from Bartlett's test
+Bartlett_ChiSq$p.value
+Bartletts_p <- format(round(as.numeric(Bartlett_ChiSq$p.value), 2), nsmall=4)
+
+# Because Bartlett's p-value is less than 0.0001 (indicated above), updating to shorter form:
+Bartletts_p = ifelse(Bartlett_ChiSq$p.value < 0.0001, "p < 0.0001", Bartlett_ChiSq$p.value)
+#Bartletts_p <- "p < 0.0001"
+
+dfBartlett <- data.frame(WilksDegreesofFreedom, Bartlett_ChiSq$wilks, Bartletts_p)
+colnames(dfBartlett) <- c("Chi-Square Statistic", "Degrees of Freedom", "Wilks' Lambda", "p-value")
+
+```
+
+```{r Bartletts Resutls, echo=F, include=T, warning=F}
+
+kable(data.frame("Chi_Square_Statistic" = dfBartlett$`Chi-Square Statistic`,
+                 "Degrees_of_Freedom" = dfBartlett$`Degrees of Freedom`,
+                 "Wilks_Lambda" = dfBartlett$`Wilks' Lambda`,
+                 "p_value" = Bartletts_p),
+      format="latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+
+#data.frame(dfBartlett$`Chi-Square Statistic`, dfBartlett$`Degrees of Freedom`, dfBartlett$`Wilks' Lambda`, Bartletts_p)
+
+
+```
+
+### Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
+
+```{r Quadratic Discriminant Analysis: Test Production, echo=F, warning=F, include=T}
+##################################################################################################
+##################################################################################################
+##################################################################################################
+                                    ####### a Priori #######
+# MASS package used for qda()
+#df.numeric <- df.numeric[order(df.numeric$shot_made_flag),]
+kobe.qda <- qda(shot_made_flag ~ ., CV=T, data=dfTrain.numeric)
+
+data.frame(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
+
+shot_made_flag_Posterior <- rbind("0", "1")
+proportion_Posterior <- rbind(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
+data.frame(shot_made_flag_Posterior, proportion_Posterior)
+
+
+
+##################################################################################################
+##################################################################################################
+##################################################################################################
+
+subDF.Train.numeric$shot_made_flag <- as.factor(subDF.Train.numeric$shot_made_flag)
+#subDF.Train.numeric$shot_made_flag <- ifelse(subDF.Train.numeric$shot_made_flag=="1", "made", "not_made")
+subDF.Train.numeric <- subDF.Train.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+
+# k=25 folds, repeat random folding for internal cross-validation 5 times:
+train.Control <- caret::trainControl(method = "repeatedcv",
+                              number = 25,
+                              repeats = 5,
+                              #summaryFunction = twoClassSummary,
+                              summaryFunction = mnLogLoss,
+                              classProbs = T) # classProbs=T to get mnLogLoss (also for twoClassSummary)
+
+# build the model using the 75% partitioned from the internal dataset (the set with all shot_made_flag response results):
+qda.filtered <- train(shot_made_flag ~ .
+                , data = subDF.Train.numeric
+                , method = "qda"
+                , trControl=train.Control
+                , preProcess = c("center", "scale", "spatialSign")
+                #, preProcess = "spatialSign"
+                , metric = "logLoss"
+                 )
+
+# test the model on the 25% partitions from the internal dataset:
+test_pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
+
+# build a confusion matrix for internal cross-validation to see performance:
+confusion_matrix_results.test <- confusionMatrix(table(test_pred.qda.filtered, subDF.Test.numeric$shot_made_flag))
+
+```
+
+
+```{r Predicting Internal Data for Model Metrics, echo=F, include=T, warning=F}
+
+# apply the model developed above to the entire (75 + 25 = 100%) internal dataset. In other words, make predictions on the data that has results so they can be compared (no folds, no repeats this time):
+internal_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = dfTrain.numeric))
+
+# compare the predicted results to the actual results to make sure model still performs as intended:
+confusion_matrix_results.internal <- confusionMatrix(table(internal_cv.predicted.qda, dfTrain.numeric$shot_made_flag))
+
+```
+
+```{r Gathering Specificity, Sensitivity, Accuracty from Confusion Matrix, echo=F, includ=F, warning=F}
+
+SpecSense.confusion <- data.frame(confusion_matrix_results.internal$byClass)
+AccuracyP.confusion <- data.frame(confusion_matrix_results.internal$overall)
+
+Accuracy.confusion <- AccuracyP.confusion[1,]
+Sensitivity.confusion <- SpecSense.confusion[1,]
+Specificity.confusion <- SpecSense.confusion[2,]
+Pos_Pred_Value.confusion <- SpecSense.confusion[3,]
+Neg_Pred_Value.confusion <- SpecSense.confusion[4,]
+Precision.confusion <- SpecSense.confusion[5,]
+
+```
+
+## **Quadratic Discriminant Analysis Misclassification Rate**
+```{r Misclassification Calculated from Full Internal Dataset, echo=F, include=T, warning=F}
+
+misclassification.QDA <- (confusion_matrix_results.internal$table[2,1] + confusion_matrix_results.internal$table[1,2]) / sum(confusion_matrix_results.internal$table)
+
+kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
+
+#data.frame(misclassification.QDA)
+
+```
+
+## **Log Loss**
+```{r Log Loss Function, echo=F, include=T, warning=F}
+
+print(logLoss)
+logLoss <- qda.filtered$results[1,2]
+logLoss_StDev <- qda.filtered$results[1,3]
+
+```
+
+```{r Quadratic Discrim AUC and ROC, echo=F, include=F, warning=F}
+
+dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="made",1,0)
+internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
+
+AUCpredStep <- prediction(internal_cv.predicted.qda, as.numeric(dfTrain.numeric$shot_made_flag))
+perf_step <- performance(AUCpredStep, measure = "tpr", x.measure = "fpr")
+plot(perf_step, main = "ROC Curve")
+
+
+AUC <- performance(AUCpredStep, measure = "auc")
+AUC <- AUC@y.values[[1]]
+AUC
+
+```
+
+## **Confusion Matrix & Metrics Table**
+```{r Confusion Matrix and Metrics Table, echo=F, include=T, warning=F}
+
+suppressWarnings(kable(data.frame("Sensitivity" = round(Sensitivity.confusion, digits=5),
+                 "Specificity" = round(Specificity.confusion, digits=5),
+                 "Pos Pred Value" = round(Pos_Pred_Value.confusion, digits=5),
+                 "Neg Pred Value" = round(Neg_Pred_Value.confusion, digits=5),
+                 "Precision" = round(Precision.confusion, digits=5),
+                 "Accuracy" = round(Accuracy.confusion, digits=5),
+                 "Misclassification" = round(misclassification.QDA, digits=5),
+                 "Logarithmic_Loss" = round(logLoss, digits=5),
+                 "AUC" = AUC),
+      format="latex", booktabs = T)  %>%
+  kable_styling(position = "center"))
+
+#data.frame(round(Sensitivity.confusion, digits=5), round(Specificity.confusion, digits=5), round(Pos_Pred_Value.confusion, digits=5), round(Neg_Pred_Value.confusion, digits=5), round(Precision.confusion, digits=5), round(Accuracy.confusion, digits=5), round(misclassification.QDA, digits=5), round(logLoss, digits=5),AUC)
+
+```
+
+
+
+# Predictions from Quadratic Discriminant Analysis
+```{r Predictions from QDA, echo=F, include=T}
+
+# Apply the developed model to the external data that needs predictions:
+pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = df.numeric.preds))
+
+df.preds$shot_made_flag <- pred.qda.filtered
+
+#write.csv(df.preds, "Predicted_Results.csv", row.names = F)
+
+##############################################################################################################
+##############################################################################################################
+############################################# end of QDA #####################################################
+##############################################################################################################
+##############################################################################################################
+
+```
+
+
+
+# **Logistic Model Development using Ordinary Least Squares**
+### A preliminary, manual veriable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.
+```{r Variable Boundaries Models, echo=F, warning=F}
+model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
+
+model.Allvar <- glm(shot_made_flag ~ ., family=binomial(link='logit'), data = dfTrain)
+```
+
+## **Forward Selection**
+### Forward selection produced a model that produced an Akaike's Information Criterion score of 27,378.
+###
+### Forward Selection Model:
+### $shot_made_flag ~ action_type + attendance + shot_zone_range + arena_temp + game_event_id + season + seconds_remaining + shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date$
+```{r Logistic Regression: Forward Selection, echo=F, include=F, warning=F}
+#### Forward Selection
+model.Forward <- stepAIC(model.forward.Start, direction = "forward", trace = F, scope = formula(model.Allvar))
+
+summary(model.Forward)
+model.Forward$anova
+#################################### Forward Selection Model Suggestion
+forward.glm <- glm( shot_made_flag ~ action_type + attendance + shot_zone_range + 
+    arena_temp + game_event_id + season + seconds_remaining + 
+    shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date
+                    , family=binomial(link='logit')
+                    , data=df)
+
+summary(forward.glm)
+########################################################################
+```
+
+## **Forward Selection - Akaike's Information Criterion for Logistic Regression:**
+```{r akaikes foreward, echo=F, include=T, warning=F}
+
+kable(data.frame("Akaikes Information Criterion: Foreward Selection" = forward.glm$aic),
+      format="latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+
+```
+
+## **Backward Elimination**
+### Backward elimination produced a model that produced an Akaike's Information Criterion score of 27,378.
+###
+### Backward Elimination Model:
+### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
+```{r Logistic Regression: Backward Elimination, echo=F, include=F, warning=F}
+# Backward Elimination
+model.Backward <- stepAIC(model.Allvar, direction = "backward", trace = F, scope = formula(model.forward.Start))
+summary(model.Backward)
+model.Backward$anova
+#################################### Backward Elimination Model Suggestion
+back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
+    loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
+    shot_type + shot_zone_basic + shot_zone_range + game_date + 
+    shot_id + attendance + arena_temp + avgnoisedb
+    , family=binomial(link='logit')
+    , data=df)
+
+summary(back.glm)
+back.glm$aic
+########################################################################
+```
+
+## **Backward Elmination - Akaike's Information Criterion for Logistic Regression:**
+```{r akaikes backward, echo=F, include=T, warning=F}
+
+kable(data.frame("Akaikes Information Criterion: Backward Elimination" = back.glm$aic),
+      format="latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+
+```
+
+## **Stepwise Regression**
+### Stepwise Regression produced a model that produced an Akaike's Information Criterion score of 27,378.
+###
+### Stepwise Regression Model:
+### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
+```{r Logistic Regression: Stepwise Regression, echo=F, include=F, warning=F}
+# Stepwise Regression
+model.Stepwise <- stepAIC(model.Allvar, direction = "both", trace = F)
+summary(model.Stepwise)
+model.Stepwise$anova
+#################################### Stepwise Regression Model Suggestion
+step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
+    loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
+    shot_type + shot_zone_basic + shot_zone_range + game_date + 
+    shot_id + attendance + arena_temp + avgnoisedb
+    , family=binomial(link='logit')
+    , data=df)
+
+summary(step.glm)
+step.glm$aic
+########################################################################
+```
+
+## **Stepwise Regression - Akaike's Information Criterion for Logistic Regression:**
+```{r akaikes, echo=F, include=T, warning=F}
+
+kable(data.frame("Akaikes Information Criterion: Stepwise Regression" = step.glm$aic),
+      format="latex", booktabs = T)  %>%
+  kable_styling(position = "center")
+
+```
+
+## **Stepwise Regression - Akaike's Information Criterion for Logistic Regression:**
