@@ -506,7 +506,7 @@ kable(data.frame("Akaikes Information Criterion: Stepwise Regression" = step.glm
 
 ```
 
-##**Cross Validation:**
+##**Cross Validation:** 
 ```{r Logistic Cross Validation, echo=F, include=T, warning=F}
 #Cross Validation #############################################################################################################
 #Recategorize rare shot types into more common, but similar shot types
