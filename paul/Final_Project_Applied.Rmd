@@ -30,7 +30,7 @@ editor_options:
   
 ---
 
-```{r Setup and Loading Packages, echo=F, include=F, warning=F}
+```{r, Setup and Loading Packages, echo=F, include=F, warning=F}
 
 library(pacman)
 p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics)
@@ -54,7 +54,7 @@ sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 ## **Outlier Check**
 ### First, we performed a brief outlier check, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
 
-```{r outlier check, echo=F, include= F, warning=F}
+```{r, outlier check, echo=F, include= F, warning=F}
 
 # unlist shot data, save into a data frame
 shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
@@ -140,6 +140,7 @@ corr.plot <- corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_fl
 
 ```
 \pagebreak
+\cleardoublepage
 ## **Post-Correlation Heat Map Variable Elimination**
 ### Following our correlation heat map, we decided to eliminate some collinear terms. However, some of the collinearity is useful to capture the instances where the terms are unique. For example, `combined_shot_type` (factor variable) is collinear with `shot_distance` (quantitative variable), but it also accounts for the method Kobe may use to make a shot. For example, distance may be relatively the same between 10 and 11 feet, but the factor levels used to derrive their `short` or `far` indications may differ. This difference could be whether Kobe makes a potentially more accurate heel-planted shot or if he is forced to lean forward and take a riskier shot at basket; the difference in distance may only be one foot, but the difference in technique could measure significant relative to the odds of success.
 
@@ -216,7 +217,7 @@ kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
 
 ### `Linear Discriminant Analysis` requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, `Quadratic Discriminant Analysis` (QDA) must be used. `Wilks' Lambda` distribution is used to assess the nature of boundary linearity, which is a required understanding to develop a well-fit discriminant classification model. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used, rather than Wilks' Lambda itself. `Bartlett's Test` is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the `Chi-Square distribution`. This method is applied herein to assess linearity.
 \pagebreak
-
+\clearpage
 ## **Bartlett's Test**
 ### The result of the Bartlett's test returned statistically significant results, indicating the null hypothesis of linearity must be rejected in favor of the alternate, which is that the discriminant boundary is non-linear. Consequently, we proceed with a model based on `Quadratic Discriminant Analysis` to provide predictive responses from a discriminant model. However, we proceed with caution, as the quadratic version of the discriminant analysis is at greater risk for over-fitting to the data than Linear Discriminant Analysis as the boundary is required to conform more closely to the data rather than to the mean of the data. This was also taken into consideration when assessing the results of the Logistic Regression model development that occurs afterward.  Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
 
@@ -418,7 +419,6 @@ internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
 
 AUCpredStep.internal <- prediction(internal_cv.predicted.qda, as.numeric(subDF.Test.numeric$shot_made_flag))
 perf_step.internal <- performance(AUCpredStep.internal, measure = "tpr", x.measure = "fpr")
-plot(perf_step.internal, main = "ROC Curve - Internal CV")
 
 AUC.internal <- performance(AUCpredStep.internal, measure = "auc")
 AUC.internal <- AUC.internal@y.values[[1]]
@@ -428,7 +428,6 @@ external_cv.predicted.qda <- ifelse(external_cv.predicted.qda=="made",1,0)
 
 AUCpredStep.external <- prediction(external_cv.predicted.qda, as.numeric(dfTrain.numeric$shot_made_flag))
 perf_step.external <- performance(AUCpredStep.external, measure = "tpr", x.measure = "fpr")
-plot(perf_step.external, main = "ROC Curve - External CV")
 
 AUC.external <- performance(AUCpredStep.external, measure = "auc")
 AUC.external <- AUC.external@y.values[[1]]
@@ -513,5 +512,17 @@ kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
 kable(bartlettsTest,
       format="latex", caption = "Bartlett Test's Wilks' Lambda Approximation", booktabs = T)  %>%
   kable_styling(position = "center")
+
+```
+
+### ROC Curves
+```{r ROC curves, echo=F, include=T, warning=F}
+
+### Internal Cross-Validation
+plot(perf_step.internal, main = "ROC Curve - Internal CV")
+
+
+### External Cross-Validation
+plot(perf_step.external, main = "ROC Curve - External CV")
 
 ```
