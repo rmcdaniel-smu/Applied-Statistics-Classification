@@ -252,6 +252,132 @@ Area Under the Curve & 0.59090\\
 \end{table}
 \newpage
 
+\hypertarget{logistic-model-development-using-ordinary-least-squares}{%
+\section{\texorpdfstring{\textbf{Logistic Model Development using Ordinary Least Squares}}{Logistic Model Development using Ordinary Least Squares}}\label{logistic-model-development-using-ordinary-least-squares}}
+
+\hypertarget{logistc-regression-is-a-classification-technique-that-is-best-suited-for-dichotomous-response-variables---in-the-case-of-the-kobe-data-the-response-is-0-for-shot-missed-or-1-for-shot-made.-compared-to-discriminant-analysis-techniques-multiple-explanatory-variables-interactions-and-categorical-variables-can-be-used-allowing-for-a-potentially-more-descriptive-model.-for-this-type-of-regression-coefficients-are-in-log-odds-where-each-coefficient-needs-to-be-exponenitated-to-yeild-odds-ratios---this-is-done-for-ease-of-interpretation.-logistic-regression-can-also-be-used-to-generate-predictions-that-yield-the-probability-of-an-observation-having-the-desired-traits-of-the-reposnse-variable-as-occuring-or-not.}{%
+\subsubsection{Logistc Regression is a classification technique that is best suited for dichotomous response variables - in the case of the Kobe data the response is `0' for shot missed, or `1' for shot made. Compared to discriminant analysis techniques multiple explanatory variables, interactions, and categorical variables can be used allowing for a potentially more descriptive model. For this type of regression, coefficients are in log-odds where each coefficient needs to be exponenitated to yeild odds ratios - this is done for ease of interpretation. Logistic Regression can also be used to generate predictions that yield the probability of an observation having the desired traits of the reposnse variable as occuring or not.}\label{logistc-regression-is-a-classification-technique-that-is-best-suited-for-dichotomous-response-variables---in-the-case-of-the-kobe-data-the-response-is-0-for-shot-missed-or-1-for-shot-made.-compared-to-discriminant-analysis-techniques-multiple-explanatory-variables-interactions-and-categorical-variables-can-be-used-allowing-for-a-potentially-more-descriptive-model.-for-this-type-of-regression-coefficients-are-in-log-odds-where-each-coefficient-needs-to-be-exponenitated-to-yeild-odds-ratios---this-is-done-for-ease-of-interpretation.-logistic-regression-can-also-be-used-to-generate-predictions-that-yield-the-probability-of-an-observation-having-the-desired-traits-of-the-reposnse-variable-as-occuring-or-not.}}
+
+\hypertarget{logstic-regression-model-selection}{%
+\subsection{\texorpdfstring{\textbf{Logstic Regression: Model Selection}}{Logstic Regression: Model Selection}}\label{logstic-regression-model-selection}}
+
+\#\#\#A preliminary, manual veriable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection. These initial models are used by forward, backward, and stepwise model selection methods are used to help select a combination of variables that result in the lowest Residual Deviance and/or AIC. The selection method that generates the model with the lowest AIC/Residual Deviance is then used for internal cross validation to further tune the model which allows for better prediction. Below are models that each selection method generated:
+
+\hypertarget{forward-selection-model}{%
+\subsubsection{Forward Selection Model:}\label{forward-selection-model}}
+
+\hypertarget{shot_made_flag-action_type-attendance-shot_zone_range-arena_temp-game_event_id-season-seconds_remaining-shot_zone_basic-loc_y-minutes_remaining-loc_x-game_date}{%
+\subsubsection{\texorpdfstring{\(shot_made_flag ~ action_type + attendance + shot_zone_range + arena_temp + game_event_id + season + seconds_remaining + shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date\)}{shot\_made\_flag \textasciitilde{} action\_type + attendance + shot\_zone\_range + arena\_temp + game\_event\_id + season + seconds\_remaining + shot\_zone\_basic + loc\_y + minutes\_remaining + loc\_x + game\_date}}\label{shot_made_flag-action_type-attendance-shot_zone_range-arena_temp-game_event_id-season-seconds_remaining-shot_zone_basic-loc_y-minutes_remaining-loc_x-game_date}}
+
+\hypertarget{backward-elimination-model}{%
+\subsubsection{Backward Elimination Model:}\label{backward-elimination-model}}
+
+\hypertarget{shot_made_flag-recid-action_type-game_event_id-loc_x-loc_y-minutes_remaining-playoffs-season-seconds_remaining-shot_type-shot_zone_basic-shot_zone_range-game_date-shot_id-attendance-arena_temp-avgnoisedb}{%
+\subsubsection{\texorpdfstring{\(shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb\)}{shot\_made\_flag \textasciitilde{} recId + action\_type + game\_event\_id + loc\_x + loc\_y + minutes\_remaining + playoffs + season + seconds\_remaining + shot\_type + shot\_zone\_basic + shot\_zone\_range + game\_date + shot\_id + attendance + arena\_temp + avgnoisedb}}\label{shot_made_flag-recid-action_type-game_event_id-loc_x-loc_y-minutes_remaining-playoffs-season-seconds_remaining-shot_type-shot_zone_basic-shot_zone_range-game_date-shot_id-attendance-arena_temp-avgnoisedb}}
+
+\hypertarget{stepwise-regression-model}{%
+\subsubsection{Stepwise Regression Model:}\label{stepwise-regression-model}}
+
+\hypertarget{shot_made_flag-recid-action_type-game_event_id-loc_x-loc_y-minutes_remaining-playoffs-season-seconds_remaining-shot_type-shot_zone_basic-shot_zone_range-game_date-shot_id-attendance-arena_temp-avgnoisedb-1}{%
+\subsubsection{\texorpdfstring{\(shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb\)}{shot\_made\_flag \textasciitilde{} recId + action\_type + game\_event\_id + loc\_x + loc\_y + minutes\_remaining + playoffs + season + seconds\_remaining + shot\_type + shot\_zone\_basic + shot\_zone\_range + game\_date + shot\_id + attendance + arena\_temp + avgnoisedb}}\label{shot_made_flag-recid-action_type-game_event_id-loc_x-loc_y-minutes_remaining-playoffs-season-seconds_remaining-shot_type-shot_zone_basic-shot_zone_range-game_date-shot_id-attendance-arena_temp-avgnoisedb-1}}
+
+\hypertarget{logistic-regression-model-selection-fit-statistics}{%
+\subsection{\texorpdfstring{\textbf{Logistic Regression: Model Selection Fit-Statistics}}{Logistic Regression: Model Selection Fit-Statistics}}\label{logistic-regression-model-selection-fit-statistics}}
+
+\hypertarget{based-on-the-fit-statistics-generated-from-each-model-selection-method-the-backwards-and-stepwise-models-are-identical-in-fit-statistics.-they-both-had-the-lowest-aic-at-25095.19-and-the-lowest-residual-deviance-at-24905.19.-the-stepwise-model-will-be-used-for-cross-validation.}{%
+\subsubsection{Based on the fit-statistics generated from each model selection method, the backwards and stepwise models are identical in fit-statistics. They both had the lowest AIC at 25095.19, and the lowest residual deviance at 24905.19. The stepwise model will be used for Cross Validation.}\label{based-on-the-fit-statistics-generated-from-each-model-selection-method-the-backwards-and-stepwise-models-are-identical-in-fit-statistics.-they-both-had-the-lowest-aic-at-25095.19-and-the-lowest-residual-deviance-at-24905.19.-the-stepwise-model-will-be-used-for-cross-validation.}}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lrr}
+\toprule
+Selection.Type & AIC & Residual.Deviance\\
+\midrule
+Forwards & 25091.70 & 24909.70\\
+Backwards & 25095.19 & 24905.19\\
+Stepwise & 25095.19 & 24905.19\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\#\#\textbf{Logstic Regression: Internal Cross Validation and Model Development}
+\#\#\# Based on the AIC and RMSE statistics generated by model selection, the stepwise model has the lowest AIC SOMEVOLUE at and RMSE at SOMEVALUE. The stepwise model will then undergo internal cross validation. The data is split into 75\% for training and 25\% for testing.
+
+Following removal of significant levels of multicollinearity from the dataset and partitioning into a 75\% training / 25\% testing split, internal cross-validation is performed. The specifics of this test involves 25 folds of the data - meaning the 75\% training data is divided into 25 partitions. The model is then trainied on 1/25th of the original 75\%, then tested against the remaining 24/25ths, 1/25ths at-a-time. This test is repeated 5 times, with each repeat involving a different random partitioning of the 25 specified \texttt{folds} of the data. Finally, the model developed using the 75\% training split is then applied to the 25\% testing split and predictions are measured against the actuals of that split to develop model statistics such as \texttt{Accuracy}, \texttt{Misclassification}, \texttt{Precision}, \texttt{Sensitivity} and \texttt{Specificity}.
+
+\#\#\textbf{Logstic Regression: External Cross Validation and Model Development}
+
+\hypertarget{as-with-the-qudratic-discriminant-analysis-external-cross-valdiation-and-model-development-section-confusion-matricies-are-used-to-assess-model-performance-where-we-will-be-focusing-on-accuracy-precision-sensitivity-specificity-misclassification-rateauc-log-loss.-when-looking-at-model-performance-high-values-foraccuracy-precision-sensitivity-specificityauc-are-desireable-and-low-values-for-misclassification-rate-log-loss-are-desireable.-for-descriptions-of-the-mentioned-terms-please-refer-to-the-quadratic-discriminant-analysis-external-cross-valdiation-and-model-development-section-for-more-information.}{%
+\subsubsection{\texorpdfstring{As with the ``Qudratic Discriminant Analysis: External Cross-Valdiation and Model Development'' section, confusion matricies are used to assess model performance where we will be focusing on \texttt{Accuracy}, \texttt{Precision}, \texttt{Sensitivity}, \texttt{Specificity}, \texttt{Misclassification\ Rate},\texttt{AUC}, \texttt{Log\ Loss}. When looking at model performance high values for:\texttt{Accuracy}, \texttt{Precision}, \texttt{Sensitivity}, \texttt{Specificity},\texttt{AUC} are desireable; and low values for \texttt{Misclassification\ Rate}, \texttt{Log\ Loss} are desireable. For descriptions of the mentioned terms please refer to the ``Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development'' section for more information.}{As with the ``Qudratic Discriminant Analysis: External Cross-Valdiation and Model Development'' section, confusion matricies are used to assess model performance where we will be focusing on Accuracy, Precision, Sensitivity, Specificity, Misclassification Rate,AUC, Log Loss. When looking at model performance high values for:Accuracy, Precision, Sensitivity, Specificity,AUC are desireable; and low values for Misclassification Rate, Log Loss are desireable. For descriptions of the mentioned terms please refer to the ``Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development'' section for more information.}}\label{as-with-the-qudratic-discriminant-analysis-external-cross-valdiation-and-model-development-section-confusion-matricies-are-used-to-assess-model-performance-where-we-will-be-focusing-on-accuracy-precision-sensitivity-specificity-misclassification-rateauc-log-loss.-when-looking-at-model-performance-high-values-foraccuracy-precision-sensitivity-specificityauc-are-desireable-and-low-values-for-misclassification-rate-log-loss-are-desireable.-for-descriptions-of-the-mentioned-terms-please-refer-to-the-quadratic-discriminant-analysis-external-cross-valdiation-and-model-development-section-for-more-information.}}
+
+\begin{verbatim}
+## [1] 0.3150367
+\end{verbatim}
+
+\includegraphics{Final_Project_Applied_files/figure-latex/External CV-1.pdf}
+
+\begin{verbatim}
+## [1] 0.7055852
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 0.754176
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 0.3150367
+\end{verbatim}
+
+\includegraphics{Final_Project_Applied_files/figure-latex/External CV-2.pdf}
+
+\begin{verbatim}
+## [1] 0.7093543
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 0.7580061
+\end{verbatim}
+
+\begin{table}[t]
+
+\caption{(\#tab:Confusion Matrix Tables Logistic)Internal Cross-Validation Confusion Matrix}
+\centering
+\begin{tabular}{lr}
+\toprule
+  & Internal CV Statistics\\
+\midrule
+Sensitivity & 0.51431\\
+Specificity & 0.66761\\
+Precision & 0.56104\\
+Accuracy & 0.59826\\
+Misclassification Rate & 0.40174\\
+\addlinespace
+Logarithmic Loss & 0.70127\\
+Area Under the Curve & 0.40904\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+
+\caption{(\#tab:Confusion Matrix Tables Logistic)External Cross-Validation Confusion Matrix}
+\centering
+\begin{tabular}{lr}
+\toprule
+  & External CV Statistics\\
+\midrule
+Sensitivity & 0.86318\\
+Specificity & 0.46406\\
+Precision & 0.66521\\
+Accuracy & 0.68450\\
+Misclassification Rate & 0.31504\\
+\addlinespace
+Logarithmic Loss & 0.70127\\
+Area Under the Curve & 0.59090\\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \newpage
 
 \hypertarget{appendix-a-images-and-tables}{%

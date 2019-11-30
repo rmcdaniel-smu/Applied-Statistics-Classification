@@ -442,7 +442,7 @@ colnames(confusionFrame.external) <- "External CV Statistics"
 
 ```
 \pagebreak
-```{r Confusion Matrix Tables, echo=F, include=T, warning=F}
+```{r Confusion Matrix Tables - QDA, echo=F, include=T, warning=F}
 
 ### Internal Cross-Validation Confusion Matrix
 suppressWarnings(kable(list(confusionFrame.internal, confusionFrame.external),
@@ -483,7 +483,7 @@ df.preds$shot_made_flag <- pred.qda.filtered
 ### Stepwise Regression Model:
 ### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
 
-```{r Logistic Regression: Model Selection, echo=F, include=F, warning=F}
+```{r Logistic Regression: Model Selection Forward, echo=F, include=F, warning=F}
 ### Initial Models
 model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
 model.Allvar <- glm(shot_made_flag ~ ., family=binomial(link='logit'), data = dfTrain)
@@ -503,7 +503,9 @@ forward.glm <- glm( shot_made_flag ~ action_type + attendance + shot_zone_range 
 
 summary(forward.glm)
 ########################################################################
+```
 
+```{r Logistic Regression: Model Selection Backward, echo=F, include=F, warning=F}
 # Backward Elimination
 model.Backward <- stepAIC(model.Allvar, direction = "backward", trace = F, scope = formula(model.forward.Start))
 summary(model.Backward)
@@ -519,8 +521,9 @@ back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
 summary(back.glm)
 back.glm$aic
 ########################################################################
+```
 
-
+```{r Logistic Regression: Model Selection Stepwise, echo=F, include=F, warning=F}
 # Stepwise Regression
 model.Stepwise <- stepAIC(model.Allvar, direction = "both", trace = F)
 summary(model.Stepwise)
@@ -657,7 +660,7 @@ loglossTraining = dfTrain %>%
   loglossValue
 ```
 
-```{r Confusion Matrix Tables,echo = F, include = T, warning = F}
+```{r Confusion Matrix Tables Logistic,echo = F, include = T, warning = F}
 ######### Logistic Internal Cross-Validation Metrics
 lr.SpecSense.confusion.internal <- data.frame(cf$byClass)
 lr.AccuracyP.confusion.internal <- data.frame(cf$overall)
