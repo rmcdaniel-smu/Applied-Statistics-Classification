@@ -345,8 +345,8 @@ confusion_matrix_results.internal<- confusionMatrix(table(internal_cv.predicted.
 ```
 
 # **Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development**
-### After building a model using internal cross-validation, which applied 5 repeated internal cross-validations across the 25 folds of training data, a confusion matrix was constructed and analyzed. Next, we applied the model developed using the 75% training split to make predictions against the entire portion of data that includes values for `shot_made_flag` in order to assess how closely the model can predict against the entire data set compared to the actuals. Applying the model to the entire dataset as `external cross-validation` provides the model an opportunity to test against different data and more closely simulate a real-life scenario than internal cross-validation. Internal and external cross-validation is performed for later Logistic Regression models as well. Following external cross-validation of both models, the metrics are compared to determine the best model (Quadratic Discriminant Analysis versus Logistic Regression).
-
+\pagebreak
+### After building a model using internal cross-validation, which applied 5 repeated internal cross-validations across the 25 folds of training data, a confusion matrix was constructed and analyzed. Next, we applied the model developed using the 75% training split to make predictions against the entire portion of data that includes values for `shot_made_flag` in order to assess how closely the model can predict against the entire data set compared to the actuals. Applying the model to the entire dataset as `external cross-validation` provides the model an opportunity to test against different data and more closely simulate a real-life scenario than internal cross-validation. Internal and external cross-validation is performed for later Logistic Regression models as well.Following external cross-validation of both models, the metrics are compared to determine the best model (Quadratic Discriminant Analysis versus Logistic Regression).
 ```{r Predicting Internal Data for Model Metrics, echo=F, include=F, warning=F}
 
 # apply the model developed above to the entire (75 + 25 = 100%) internal dataset. In other words, make predictions on the data that has results so they can be compared (no folds, no repeats this time):
@@ -379,7 +379,6 @@ Specificity.confusion.external <- SpecSense.confusion.external[2,]
 Precision.confusion.external <- SpecSense.confusion.external[5,]
 
 ```
-\newpage
 ### A confusion matrix is a table of results from cross-validation. Some key metrics provided by a confusion matrix include `Accuracy`, `Precision`, `Sensitivity` and `Specificity`. `Accuracy` is the number of all correct predictions divided by the number of all predictions. `Precision` is the ratio of the number of correctly classified positive predictions divided by the number of all positive predictions. `Sensitivity` (also called `Recall`) is the number of correctly classified positive predictions divided by all positive actuals - this is similiar to precision, except that sensitivity measures against actual values. `Specificity` is the number of correctly classified negative predictions divided by all negative actuals. Simplistically, sensitivity is the true positive rate wherease specificity is the true negative rate. Higher Accuracy, Precision, Sensitivity, and Specificity is desireable.
 
 ### Another important component for cross-validation is the `Misclassification Rate`. The Misclassification Rate is a descriptor of how often a model is wrong. This value is equal to the total number of False Positives plus the False Negatives divided by all predictions. A lower misclassification rate is desireable.
