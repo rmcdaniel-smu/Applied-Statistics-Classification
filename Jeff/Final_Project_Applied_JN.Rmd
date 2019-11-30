@@ -568,30 +568,107 @@ mod_fit <- train(shot_made_flag ~ recId + action_type + game_event_id +
 
 ##**Logstic Regression: External Cross Validation and Model Development**
 
-### As with the Qudratic Discriminant Analysis: External Cross-Valdiation and Model Development section, confusion matricies are used to assess model performance where we will be focusing on `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `Misclassification Rate`, and `AIC`.  `Accuracy` is the number of correct predicitons divided by total observations.  `Precision` is number of correctly classified positive observations over total overservations.  `Sensitivity` is a model's ability to correctly identify positive observations divided by all positive classificaitons. 
+### As with the "Qudratic Discriminant Analysis: External Cross-Valdiation and Model Development" section, confusion matricies are used to assess model performance where we will be focusing on `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `Misclassification Rate`,`AUC`, `Log Loss`.  When looking at model performance high values for:`Accuracy`, `Precision`, `Sensitivity`, `Specificity`,`AUC` are desireable; and low values for `Misclassification Rate`, `Log Loss` are desireable.  For descriptions of the mentioned terms please refer to the "Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development" section for more information.
 ```{r External CV, echo = F, include = T, warning = F}
-
+########################################################
+#Interal Model Performance Metrics
 #confusion matrix https://rpubs.com/dvorakt/255527
-pred = predict(mod_fit, newdata=dfTrain)
-cf = confusionMatrix(table(data=as.numeric(pred>0.5), dfTrain$shot_made_flag))
-misclassificationRate = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
-misclassificationRate
+pred = predict(mod_fit, newdata=testing)
+cf = confusionMatrix(table(data=as.numeric(pred>0.5), testing$shot_made_flag))
+misclassificationRateInternal = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
+misclassificationRateInternal
 
 #ROC/AUC
 # Compute AUC for predicting Class with the model
-pred <- prediction(pred, dfTrain$shot_made_flag)
+pred <- prediction(pred, testing$shot_made_flag)
 perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 plot(perf, main = "ROC Curve")
 
 
-auc <- performance(pred, measure = "auc")
-auc <- auc@y.values[[1]]
-auc
+aucInternal <- performance(pred, measure = "auc")
+aucInternal <- aucInternal@y.values[[1]]
+aucInternal
+
+#LOG LOSS AND PREDICTION FOR TRAINING DATA
+testing$prob = predict(mod_fit, newdata=testing)
+loglossTraining = testing %>%
+  mutate(logloss = testing$shot_made_flag * log(1-testing$prob) + (1-testing$shot_made_flag)*log(1-testing$prob))
+
+  #Will generate log loss value
+  loglossValue = -1/5174 * sum(loglossTraining$logloss)
+  loglossValue
+
+########################################################
+#External Model performance Metrics
+ex.pred = predict(mod_fit, newdata=dfTrain)
+ex.cf = confusionMatrix(table(data=as.numeric(ex.pred>0.5), dfTrain$shot_made_flag))
+misclassificationRateEx = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
+misclassificationRateEx
+
+#ROC/AUC
+# Compute AUC for predicting Class with the model
+expredROC <- prediction(ex.pred, dfTrain$shot_made_flag)
+experf <- performance(expredROC, measure = "tpr", x.measure = "fpr")
+plot(experf, main = "ROC Curve")
 
 
+aucEx <- performance(expredROC, measure = "auc")
+aucEx <- aucEx@y.values[[1]]
+aucEx
+
+#LOG LOSS AND PREDICTION FOR External CV
+dfTrain$prob = predict(mod_fit, newdata=dfTrain)
+loglossTraining = dfTrain %>%
+  mutate(logloss = dfTrain$shot_made_flag * log(1-dfTrain$prob) + (1-dfTrain$shot_made_flag)*log(1-dfTrain$prob))
+
+  #Will generate log loss value
+  loglossValue = -1/20697 * sum(loglossTraining$logloss)
+  loglossValue
+```
+
+```{r Confusion Matrix Tables,echo = F, include = T, warning = F}
+######### Logistic Internal Cross-Validation Metrics
+lr.SpecSense.confusion.internal <- data.frame(cf$byClass)
+lr.AccuracyP.confusion.internal <- data.frame(cf$overall)
+
+lr.Accuracy.confusion.internal <- AccuracyP.confusion.internal[1,]
+lr.Sensitivity.confusion.internal <- SpecSense.confusion.internal[1,]
+lr.Specificity.confusion.internal <- SpecSense.confusion.internal[2,]
+lr.Precision.confusion.internal <- SpecSense.confusion.internal[5,]
+
+######### External Cross-Validation Metrics
+lr.SpecSense.confusion.external <- data.frame(ex.cf$byClass)
+lr.AccuracyP.confusion.external <- data.frame(ex.cf$overall)
+
+lr.Accuracy.confusion.external <- lr.AccuracyP.confusion.external[1,]
+lr.Sensitivity.confusion.external <- lr.SpecSense.confusion.external[1,]
+lr.Specificity.confusion.external <- lr.SpecSense.confusion.external[2,]
+lr.Precision.confusion.external <- lr.SpecSense.confusion.external[5,]
 
 
+### Internal Cross-Validation Confusion Matrix
+lr.confusionFrame.internal <- data.frame(rbind(round(lr.Sensitivity.confusion.internal, digits=5),round(lr.Specificity.confusion.internal, digits=5),round(lr.Precision.confusion.internal, digits=5),round(lr.Accuracy.confusion.internal, digits=5),round(misclassificationRateInternal, digits=5),round(loglossValue, digits=5),round(aucInternal, digits=5)))
 
+rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+colnames(confusionFrame.internal) <- "Internal CV Statistics"
+
+suppressWarnings(kable(confusionFrame.internal,
+      format="latex", caption = "Internal Cross-Validation Confusion Matrix", booktabs = T)  %>%
+  kable_styling(position = "center"))
+
+### External Cross-Validation Confusion Matrix
+confusionFrame.external <- data.frame(rbind(round(lr.Sensitivity.confusion.external, digits=5),round(lr.Specificity.confusion.external, digits=5),round(lr.Precision.confusion.external, digits=5),round(lr.Accuracy.confusion.external, digits=5),round(misclassificationRateEx, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
+
+rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+colnames(confusionFrame.external) <- "External CV Statistics"
+
+suppressWarnings(kable(confusionFrame.external,
+      format="latex", caption = "External Cross-Validation Confusion Matrix", booktabs = T)  %>%
+  kable_styling(position = "center"))
+```
+
+
+```{r generate predicitons,echo = F, include = F, warning = F}
 #calculate predictions for prediction.Data
 prediction.Data$prob = predict(mod_fit, newdata=df.preds)
 logistic_predictions = prediction.Data %>%
