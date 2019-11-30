@@ -7,7 +7,7 @@ author:
 date: |
   Master of Science in Data Science, Southern Methodist University, USA
 lang: en-US
-class: man
+documentclass: book
 figsintext: true
 numbersections: true
 encoding: UTF-8
@@ -18,9 +18,7 @@ output:
      citation_package: natbib
      keep_tex: true
      toc: true
-#header-includes:
 editor_options: 
-  
   chunk_output_type: console
 ---
 
@@ -34,7 +32,6 @@ df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, strin
 
 df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
-sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 
 ```
 
@@ -45,10 +42,11 @@ sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 ### This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. 
 # **Exploratory Data Analysis**
 
-## **Outlier Check**
-### First, we performed a brief outlier check, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
+## **Outlier Check & Transformations**
+### First, the dataset was scanned for missing values. However, there were no missing values identified. Following this, an outlier check was performed, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
 
 ```{r, outlier check, echo=F, include= F, warning=F}
+sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 
 # unlist shot data, save into a data frame
 shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
@@ -432,13 +430,13 @@ AUC.external <- AUC.external@y.values[[1]]
 confusionFrame.internal <- data.frame(rbind(round(Sensitivity.confusion.internal, digits=5),round(Specificity.confusion.internal, digits=5),round(Precision.confusion.internal, digits=5),round(Accuracy.confusion.internal, digits=5),round(misclassification.QDA.internal, digits=5),round(logLoss.quadratic, digits=5),round(AUC.internal, digits=5)))
 
 rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
-colnames(confusionFrame.internal) <- "Internal CV Statistics"
+colnames(confusionFrame.internal) <- "Internal CV Statistics: Quadratic Discriminant Analytis"
 
 ### External Cross-Validation Confusion Matrix
 confusionFrame.external <- data.frame(rbind(round(Sensitivity.confusion.external, digits=5),round(Specificity.confusion.external, digits=5),round(Precision.confusion.external, digits=5),round(Accuracy.confusion.external, digits=5),round(misclassification.QDA.external, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
 
 rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
-colnames(confusionFrame.external) <- "External CV Statistics"
+colnames(confusionFrame.external) <- "External CV Statistics: Quadratic Discriminant Analytis"
 
 ```
 \pagebreak
@@ -588,15 +586,23 @@ testing <- dfTrain[ -Train, ]
 ctrl <- trainControl(method = "repeatedcv",
                      number = 25,
                      repeats = 5,
+                     summaryFunction = mnLogLoss,
                      classProbs = T)
 
 #combined shot type used instead of action type - test set has action types that are not in the training set
+training$shot_made_flag <- as.integer(training$shot_made_flag)
 
-mod_fit <- train(shot_made_flag ~ recId + action_type + game_event_id + 
+training$shot_made_flag <- ifelse(training$shot_made_flag == 1, "made", "not_made")
+
+suppressWarnings(mod_fit <- train(shot_made_flag ~ recId + action_type + game_event_id + 
     loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
     shot_type + shot_zone_basic + shot_zone_range + game_date + 
     shot_id + attendance + arena_temp + avgnoisedb + playoffs,  data=training, method="glm", family="binomial",
-                 trControl = ctrl, tuneLength = 5, metric = "logLoss")
+                 trControl = ctrl, tuneLength = 5, metric = "logLoss"))
+unique(training$shot_made_flag)
+
+#training$shot_made_flag <- ifelse(training$shot_made_flag == "made", 1, 0)
+
 ```
 
 
