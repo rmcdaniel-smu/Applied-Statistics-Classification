@@ -501,7 +501,7 @@ model.Forward$anova
 #################################### Forward Selection Model Suggestion
 forward.glm <- glm(shot_made_flag ~ action_type + attendance + arena_temp + 
     game_event_id + season + seconds_remaining + minutes_remaining + 
-    loc_y + game_date + loc_x +loc_y*season
+    loc_y + game_date + loc_x
                     , family=binomial(link='logit')
                     , data=dfTrain)
 
@@ -708,7 +708,8 @@ topshots =  topshots[order(topshots$`Odds Ratio`),]
 
 ```{r top shots, echo=F, include=T, warning=F }
 suppressWarnings(kable(head(topshots),
-      format="latex", booktabs = T))
+      format="latex", booktabs = T))%>%
+  kable_styling(position = "center")
 
 ```
 
