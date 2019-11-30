@@ -501,7 +501,7 @@ model.Forward$anova
 #################################### Forward Selection Model Suggestion
 forward.glm <- glm(shot_made_flag ~ action_type + attendance + arena_temp + 
     game_event_id + season + seconds_remaining + minutes_remaining + 
-    loc_y + game_date + loc_x
+    loc_y + game_date + loc_x +loc_y*season
                     , family=binomial(link='logit')
                     , data=dfTrain)
 
@@ -513,8 +513,8 @@ model.Backward <- stepAIC(model.Allvar, direction = "backward", trace = F, scope
 summary(model.Backward)
 model.Backward$anova
 #################################### Backward Elimination Model Suggestion
-back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
-    loc_x + minutes_remaining + season + seconds_remaining + 
+back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
+    loc_x + minutes_remaining + season + seconds_remaining +
     shot_distance + game_date + shot_id + attendance + arena_temp
     , family=binomial(link='logit')
     , data=dfTrain)
@@ -529,8 +529,8 @@ model.Stepwise <- stepAIC(model.Allvar, direction = "both", trace = F)
 summary(model.Stepwise)
 model.Stepwise$anova
 #################################### Stepwise Regression Model Suggestion
-step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
-    loc_x + minutes_remaining + season + seconds_remaining + 
+step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
+    loc_x + minutes_remaining + season + seconds_remaining +
     shot_distance + game_date + shot_id + attendance + arena_temp
     , family=binomial(link='logit')
     , data=dfTrain)
@@ -693,7 +693,7 @@ suppressWarnings(kable(list(lr.confusionFrame.internal, lr.confusionFrame.extern
 ```
 
 ## **Logistic Regression: Fitted Model**
-```{r fitted model, echo = F, include - T, warning = F}
+```{r fitted model, echo = F, include = T, warning = F}
 
 topshots = as.data.frame(coef(mod_fit$finalMode))
 names(topshots)[1] = "Coefficient (logit)"
@@ -707,7 +707,7 @@ topshots =  topshots[order(topshots$`Odds Ratio`),]
 ```
 
 ```{r top shots, echo=F, include=T, warning=F }
-suppressWarnings(kable(head(modelcoef),
+suppressWarnings(kable(head(topshots),
       format="latex", booktabs = T))
 
 ```
@@ -766,7 +766,7 @@ par(mfrow=c(1,1))
 ```
 
 ### Fitted Logistic Regression Model
-```{r fitted model, echo = F, include - T, warning = F}
+```{r fitted model coef, echo=F, include=T, warning=F}
 
 modecoef = as.data.frame(coef(mod_fit$finalMode))
 names(modecoef)[1] = "Coefficient (logit)"
