@@ -268,7 +268,7 @@ prediction.Data <- df[which(is.na(df$shot_made_flag)),]
 
 ### Full Data train/test split for Logistic
 test_sample_size <- floor(0.75 * nrow(dfTrain))
-set.seed(123)
+set.seed(100)
 train_ind <- sample(seq_len(nrow(dfTrain)), size = test_sample_size)
 subDF.Train <- dfTrain[train_ind, ] #75% training
 subDF.Test <- dfTrain[-train_ind, ] # 25% testing
@@ -339,7 +339,7 @@ confusion_matrix_results.internal<- confusionMatrix(table(internal_cv.predicted.
 ```
 
 # **Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development**
-\pagebreak
+
 ### After building a model using internal cross-validation, which applied 5 repeated internal cross-validations across the 25 folds of training data, a confusion matrix was constructed and analyzed. Next, we applied the model developed using the 75% training split to make predictions against the entire portion of data that includes values for `shot_made_flag` in order to assess how closely the model can predict against the entire data set compared to the actuals. Applying the model to the entire dataset as `external cross-validation` provides the model an opportunity to test against different data and more closely simulate a real-life scenario than internal cross-validation. Internal and external cross-validation is performed for later Logistic Regression models as well.Following external cross-validation of both models, the metrics are compared to determine the best model (Quadratic Discriminant Analysis versus Logistic Regression).
 ```{r Predicting Internal Data for Model Metrics, echo=F, include=F, warning=F}
 
@@ -453,7 +453,7 @@ suppressWarnings(kable(list(confusionFrame.internal, confusionFrame.external),
       format="latex", booktabs = T)) 
 
 ```
-\newpage
+
 ```{r Predictions from QDA, echo=F, include=F, warnings=F}
 
 # Apply the developed model to the external data that needs predictions:
@@ -472,17 +472,20 @@ df.preds$shot_made_flag <- pred.qda.filtered
 ```
 # **Logistic Model Development using Ordinary Least Squares**
 
-### Logistc Regression is a classification technique that is best suited for dichotomous response variables - in the case of the Kobe data the response is '0' for shot missed, or '1' for shot made.  Compared to discriminant analysis techniques multiple explanatory variables, interactions, and categorical variables can be used allowing for a potentially more descriptive model.  For this type of regression, coefficients are in log-odds where each coefficient needs to be exponenitated to yeild odds ratios - this is done for ease of interpretation.  Logistic Regression can also be used to generate predictions that yield the probability of an observation having the desired traits of the reposnse variable as occuring or not.  
+### Logistic Regression is a classification technique that is best suited for dichotomous response variables - in the case of the Kobe data the response is '0' for shot missed, or '1' for shot made.  Compared to discriminant analysis techniques multiple explanatory variables, interactions, and categorical variables can be used allowing for a potentially more descriptive model.  For this type of regression, coefficients are in log-odds where each coefficient needs to be exponentiated to yield odds ratios - this is done for ease of interpretation.  Logistic Regression can also be used to generate predictions that yield the probability of an observation having the desired traits of the response variable as occurring or not.  
 
-## **Logstic Regression: Model Selection**
+## **Logistic Regression: Model Selection**
 
 ### A preliminary, manual variable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.  These initial models are used by forward, backward, and stepwise model selection methods are used to help select a combination of variables that result in the lowest Residual Deviance and/or AIC.  The selection method that generates the model with the lowest AIC/Residual Deviance is then used for internal cross validation to further tune the model which allows for better prediction.  Below are models that each selection method generated:
 
-### Forward Selection Model: $shot\_made\_flag ~ action\_type + attendance + arena\_temp + game\_event\_id + season + seconds\_remaining + minutes\_remaining + loc\_y + game\_date + loc\_x$
+**Forward Selection Model:** 
+$shot\_made\_flag = action\_type + attendance + arena\_temp + game\_event\_id + season + seconds\_remaining + minutes\_remaining + loc\_y + game\_date + loc\_x$
 
-### Backward Elimination Model: $shot\_made\_flag ~ recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
+**Backward Elimination Model:** 
+$shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
 
-### Stepwise Regression Model: $shot\_made\_flag ~ recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
+**Stepwise Regression Model:** 
+$shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
 
 ```{r Logistic Regression: Model Selection, echo=F, include=F, warning=F}
 ### Initial Models
@@ -536,10 +539,8 @@ summary(step.glm)
 step.glm$aic
 ```
 
-## **Logistic Regression: Model Selection Fit-Statistics**
-
-### Based on the fit-statistics generated from each model selection method, the backwards and stepwise models are identical in fit-statistics.  They both had the lowest AIC at 25095.19, and the lowest residual deviance at 24905.19.  The stepwise model will be used for Cross Validation.
-```{r akaikes foreward, echo=F, include=T, warning=F}
+### Based on the fit-statistics generated from each model selection method, the backwards and stepwise models are identical in fit-statistics with an AIC at 25167.77, and the residual deviance at 25001.77.  The forward model selection out-performs both backwards and stepwise models with an AIC of 25166.48, but has a higher a residual deviance at 25001.48.  Compared to the forward selected model, the backwards and stepwise models have lower residual deviances, although their residual deviances are very close in value to the forward model, their AIC values are larger compared to the forward selected model.  Based on the evidence, the forward selected model will be used for the internal and external cross validation process.
+```{r AIC Tables, echo=F, include=T, warning=F}
 # Model Selection Statistics AIC and RMSE
 model_stats = data.frame("Selection Type" = c('Forwards','Backwards','Stepwise'),
                        "AIC" = c(forward.glm$aic,back.glm$aic,step.glm$aic),
@@ -551,8 +552,9 @@ kable(model_stats,format="latex", booktabs = T)  %>%
 ```
 
 
-## **Logstic Regression: Internal Cross Validation and Model Development** 
-### Based on the AIC and RMSE statistics generated by model selection, the stepwise model has the lowest AIC SOMEVOLUE at and RMSE at SOMEVALUE.  The stepwise model will then undergo internal cross validation.  The data is split into 75% for training and 25% for testing.
+## **Logistic Regression: Internal Cross Validation and Model Development** 
+### After identifying that the forward selected model is the best candidate based on it's AIC and residual deviance, its features are tuned using an internal cross validation.  A training set is generated by randomly selecting 75% of the observations, with the remaining 25% serving as the validation (test) set.  The model is tuned using 25 folds and is repeated 5 times, this process is the same as described in section 5.0.1.  Prior to the internal cross validation process, action types that rarely occur in the data are recoded to similar, but differ action types, i.e. "Running Tip Shot" (1 observation) to "Tip Shot" (many observations).  If levels within the evaluation data exist but are not present in the training data, a trained model will have difficulty making predictions. Infrequently occurring action types are recoded to similar action types to avoid this situation.
+
 ```{r Logistic Cross Validation, echo=F, include=T, warning=F}
 #Cross Validation #############################################################################################################
 #Recategorize rare shot types into more common, but similar shot types
@@ -597,8 +599,9 @@ mod_fit <- train(shot_made_flag ~ action_type + attendance + arena_temp +
 
 
 ## **Logistic Regression: External Cross Validation and Model Development**
+### External cross validation is used to evaluate a model after it has been tuned in the internal cross validation process.  External cross validation confusion matrix statistics, ROC/AUC, and misclassification rates can be compared to the internal cross validation statistics to help assess performance.   
+### As with the "Quadratic Discriminant Analysis: External Cross-Validation and Model Development" section, confusion matrices are used to assess model performance where we will be focusing on `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `Misclassification Rate`, `AUC`, and `Log Loss`.  When looking at model performance high values for: ‘Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `AUC` are desirable; and low values for `Misclassification Rate`, `Log Loss` are desirable.  For descriptions of the mentioned terms please refer to the "Quadratic Discriminant Analysis: External Cross-Validation and Model Development" section for more information.
 
-### As with the "Qudratic Discriminant Analysis: External Cross-Valdiation and Model Development" section, confusion matricies are used to assess model performance where we will be focusing on `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `Misclassification Rate`,`AUC`, `Log Loss`.  When looking at model performance high values for:`Accuracy`, `Precision`, `Sensitivity`, `Specificity`,`AUC` are desireable; and low values for `Misclassification Rate`, `Log Loss` are desireable.  For descriptions of the mentioned terms please refer to the "Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development" section for more information.
 ```{r External CV, echo = F, include = T, warning = F}
 ########################################################
 #Interal Model Performance Metrics
@@ -646,8 +649,9 @@ loglossTraining = dfTrain %>%
   loglossValue = -1/20697 * sum(loglossTraining$logloss)
 ```
 
-# **Logistic Regression: Internal vs. External Cross-Validation**
-###
+## **Logistic Regression: Internal vs. External Cross-Validation**
+### The misclassification rate, and Log loss for both internal and external cross validations are close in values  However the external cross validated model has higher `Sensitivity`, `Precision`, and `Accuracy`; but lower `Specificity` and `Area Under the Curve` compared to the internal cross validated model.  This suggests that model `Sensitivity`, `Precision`, and `Accuracy` improves, but its predictive performance decreases when evaluated using the external cross validation.
+
 ```{r Logisitic Confusion Matrix Tables,echo = F, include = T, warning = F}
 ######### Logistic Internal Cross-Validation Metrics
 lr.SpecSense.confusion.internal <- data.frame(cf$byClass)
@@ -671,21 +675,42 @@ lr.Precision.confusion.external <- lr.SpecSense.confusion.external[5,]
 ### Internal Cross-Validation Confusion Matrix
 lr.confusionFrame.internal <- data.frame(rbind(round(lr.Sensitivity.confusion.internal, digits=5),round(lr.Specificity.confusion.internal, digits=5),round(lr.Precision.confusion.internal, digits=5),round(lr.Accuracy.confusion.internal, digits=5),round(misclassificationRateInternal, digits=5),round(loglossValue, digits=5),round(aucInternal, digits=5)))
 
-rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
-colnames(confusionFrame.internal) <- "Internal CV Statistics"
+rownames(lr.confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+colnames(lr.confusionFrame.internal) <- "Internal CV Statistics"
 
 ### External Cross-Validation Confusion Matrix
 lr.confusionFrame.external <- data.frame(rbind(round(lr.Sensitivity.confusion.external, digits=5),round(lr.Specificity.confusion.external, digits=5),round(lr.Precision.confusion.external, digits=5),round(lr.Accuracy.confusion.external, digits=5),round(misclassificationRateEx, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
 
-rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
-colnames(confusionFrame.external) <- "External CV Statistics"
-
-#Tables for 
-suppressWarnings(kable(list(lr.confusionFrame.internal, lr.confusionFrame.external)),
-      format="latex", booktabs = T)
+rownames(lr.confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+colnames(lr.confusionFrame.external) <- "External CV Statistics"
 ```
 
+```{r Logisitic Confusion Matricies, echo=F, include=T, warning=F }
+#Tables for 
+suppressWarnings(kable(list(lr.confusionFrame.internal, lr.confusionFrame.external),
+      format="latex", booktabs = T))
 
+```
+
+## **Logistic Regression: Fitted Model**
+```{r fitted model, echo = F, include - T, warning = F}
+
+topshots = as.data.frame(coef(mod_fit$finalMode))
+names(topshots)[1] = "Coefficient (logit)"
+topshots$`Odds Ratio` = exp(topshots$`Coefficient (logit)`) 
+topshots =  topshots[order(topshots$`Odds Ratio`),]
+
+#Predicitons
+#df.preds$prob = predict(mod_fit, newdata=df.preds)
+#logistic_prediction =  df.preds %>%select(recId, prob)
+#write.csv(logistic_prediction,"logistic_prediction.csv")
+```
+
+```{r top shots, echo=F, include=T, warning=F }
+suppressWarnings(kable(head(modelcoef),
+      format="latex", booktabs = T))
+
+```
 
 \newpage
 # Appendix A: Images and Tables
@@ -727,12 +752,27 @@ kable(bartlettsTest,
 
 ### ROC Curves
 ```{r ROC curves, echo=F, include=T, warning=F}
-
+par(mfrow=c(2,2))
 ### Internal Cross-Validation
-plot(perf_step.internal, main = "ROC Curve - Internal CV")
-plot(perf, main = " Logisitic Regression ROC Curve - Internal CV")
+plot(perf_step.internal, main = "QDA ROC Curve - Internal CV")
 
 ### External Cross-Validation
-plot(perf_step.external, main = "ROC Curve - External CV")
+plot(perf_step.external, main = "QDA ROC Curve - External CV")
+
+
+plot(perf, main = " Logisitic Regression ROC Curve - Internal CV")
 plot(experf, main = "Logisitic Regression ROC Curve - External CV")
+par(mfrow=c(1,1))
+```
+
+### Fitted Logistic Regression Model
+```{r fitted model, echo = F, include - T, warning = F}
+
+modecoef = as.data.frame(coef(mod_fit$finalMode))
+names(modecoef)[1] = "Coefficient (logit)"
+modecoef$`Odds Ratio` = exp(modecoef$`Coefficient (logit)`) 
+modecoef =  modecoef[order(modecoef$`Odds Ratio`),]
+
+suppressWarnings(kable(modecoef,
+      format="latex", booktabs = T))
 ```
