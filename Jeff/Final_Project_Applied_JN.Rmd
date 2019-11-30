@@ -63,10 +63,8 @@ tryCatch(
     df <- df %>% 
       subset(select=-c(team_id, # dropping since this is a uniform distribution of data
                        team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
-                       action_type, # dropping this in favor of combined_shot_type
+                       combined_shot_type, # dropping this in favor of combined_shot_type
                        shot_zone_area, # this is ambiguous and less descriptive than geospatial data
-                       shot_zone_basic, # this is ambiguous and less descriptive than geospatial data
-                       shot_zone_range, # this is ambiguous and less descriptive than geospatial data
                        matchup # removing in favor of opponent; Kobe only played for LAL so that will never change
                       )
               )
@@ -77,10 +75,8 @@ tryCatch(
     df.preds <- df.preds %>% 
       subset(select=-c(team_id, # dropping since this is a uniform distribution of data
                        team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
-                       action_type, # dropping this in favor of combined_shot_type
+                       combined_shot_type, # dropping this in favor of combined_shot_type
                        shot_zone_area, # this is ambiguous and less descriptive than geospatial data
-                       shot_zone_basic, # this is ambiguous and less descriptive than geospatial data
-                       shot_zone_range, # this is ambiguous and less descriptive than geospatial data
                        matchup # removing in favor of opponent; Kobe only played for LAL so that will never change
                       )
               )
@@ -438,20 +434,30 @@ df.preds$shot_made_flag <- pred.qda.filtered
 
 ```
 
+
 # **Logistic Model Development using Ordinary Least Squares**
-### A preliminary, manual variable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.
-```{r Variable Boundaries Models, echo=F, warning=F}
-model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
 
-model.Allvar <- glm(shot_made_flag ~ ., family=binomial(link='logit'), data = dfTrain)
-```
+### Logistc Regression is a classification technique that is best suited for dichotomous response variables - in the case of the Kobe data the response is '0' for shot missed, or '1' for shot made.  Compared to discriminant analysis techniques multiple explanatory variables, interactions, and categorical variables can be used allowing for a potentially more descriptive model.  For this type of regression, coefficients are in log-odds where each coefficient needs to be exponenitated to yeild odds ratios - this is done for ease of interpretation.  Logistic Regression can also be used to generate predictions that yield the probability of an observation having the desired traits of the reposnse variable as occuring or not.  
 
-## **Forward Selection**
-### Forward selection produced a model that produced an Akaike's Information Criterion score of 27,378.
-###
+## **Logstic Regression: Model Selection**
+
+###A preliminary, manual veriable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.  These initial models are used by forward, backward, and stepwise model selection methods are used to help select a combination of variables that result in the lowest Residual Deviance and/or AIC.  The selection method that generates the model with the lowest AIC/Residual Deviance is then used for internal cross validation to further tune the model which allows for better prediction.  Below are models that each selection method generated:
+
 ### Forward Selection Model:
 ### $shot_made_flag ~ action_type + attendance + shot_zone_range + arena_temp + game_event_id + season + seconds_remaining + shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date$
-```{r Logistic Regression: Forward Selection, echo=F, include=F, warning=F}
+
+### Backward Elimination Model:
+### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
+
+### Stepwise Regression Model:
+### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
+
+```{r Logistic Regression: Model Selection, echo=F, include=F, warning=F}
+### Initial Models
+model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
+model.Allvar <- glm(shot_made_flag ~ ., family=binomial(link='logit'), data = dfTrain)
+########################################################################
+
 #### Forward Selection
 model.Forward <- stepAIC(model.forward.Start, direction = "forward", trace = F, scope = formula(model.Allvar))
 
@@ -460,29 +466,13 @@ model.Forward$anova
 #################################### Forward Selection Model Suggestion
 forward.glm <- glm( shot_made_flag ~ action_type + attendance + shot_zone_range + 
     arena_temp + game_event_id + season + seconds_remaining + 
-    shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date
+    shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date + playoffs
                     , family=binomial(link='logit')
                     , data=dfTrain)
 
 summary(forward.glm)
 ########################################################################
-```
 
-## **Forward Selection - Akaike's Information Criterion for Logistic Regression:**
-```{r akaikes foreward, echo=F, include=T, warning=F}
-
-kable(data.frame("Akaikes Information Criterion: Foreward Selection" = forward.glm$aic),
-      format="latex", booktabs = T)  %>%
-  kable_styling(position = "center")
-
-```
-
-## **Backward Elimination**
-### Backward elimination produced a model that produced an Akaike's Information Criterion score of 27,378.
-###
-### Backward Elimination Model:
-### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
-```{r Logistic Regression: Backward Elimination, echo=F, include=F, warning=F}
 # Backward Elimination
 model.Backward <- stepAIC(model.Allvar, direction = "backward", trace = F, scope = formula(model.forward.Start))
 summary(model.Backward)
@@ -498,23 +488,8 @@ back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
 summary(back.glm)
 back.glm$aic
 ########################################################################
-```
 
-## **Backward Elmination - Akaike's Information Criterion for Logistic Regression:**
-```{r akaikes backward, echo=F, include=T, warning=F}
 
-kable(data.frame("Akaikes Information Criterion: Backward Elimination" = back.glm$aic),
-      format="latex", booktabs = T)  %>%
-  kable_styling(position = "center")
-
-```
-
-## **Stepwise Regression**
-### Stepwise Regression produced a model that produced an Akaike's Information Criterion score of 27,378.
-###
-### Stepwise Regression Model:
-### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
-```{r Logistic Regression: Stepwise Regression, echo=F, include=F, warning=F}
 # Stepwise Regression
 model.Stepwise <- stepAIC(model.Allvar, direction = "both", trace = F)
 summary(model.Stepwise)
@@ -523,25 +498,34 @@ model.Stepwise$anova
 step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
     loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
     shot_type + shot_zone_basic + shot_zone_range + game_date + 
-    shot_id + attendance + arena_temp + avgnoisedb + playoffs
+    shot_id + attendance + arena_temp + avgnoisedb
     , family=binomial(link='logit')
     , data=dfTrain)
 
 summary(step.glm)
 step.glm$aic
-########################################################################
 ```
 
-## **Stepwise Regression - Akaike's Information Criterion for Logistic Regression:**
-```{r akaikes, echo=F, include=T, warning=F}
+## **Logistic Regression: Model Selection Fit-Statistics**
 
-kable(data.frame("Akaikes Information Criterion: Stepwise Regression" = step.glm$aic),
-      format="latex", booktabs = T)  %>%
+### Based on the fit-statistics generated from each model selection method, the backwards and stepwise models are identical in fit-statistics.  They both had the lowest AIC at 25095.19, and the lowest residual deviance at 24905.19.  The stepwise model will be used for Cross Validation.
+```{r akaikes foreward, echo=F, include=T, warning=F}
+# Model Selection Statistics AIC and RMSE
+model_stats = data.frame("Selection Type" = c('Forwards','Backwards','Stepwise'),
+                       "AIC" = c(forward.glm$aic,back.glm$aic,step.glm$aic),
+                       "Residual Deviance" = c(forward.glm$deviance,back.glm$deviance,step.glm$deviance))
+
+kable(model_stats,format="latex", booktabs = T)  %>%
   kable_styling(position = "center")
 
 ```
 
-##**Cross Validation:** 
+
+##**Logstic Regression: Internal Cross Validation and Model Development** 
+### Based on the AIC and RMSE statistics generated by model selection, the stepwise model has the lowest AIC SOMEVOLUE at and RMSE at SOMEVALUE.  The stepwise model will then undergo internal cross validation.  The data is split into 75% for training and 25% for testing.
+
+
+Following removal of significant levels of multicollinearity from the dataset and partitioning into a 75% training / 25% testing split, internal cross-validation is performed. The specifics of this test involves 25 folds of the data - meaning the 75% training data is divided into 25 partitions. The model is then trainied on 1/25th of the original 75%, then tested against the remaining 24/25ths, 1/25ths at-a-time. This test is repeated 5 times, with each repeat involving a different random partitioning of the 25 specified `folds` of the data. Finally, the model developed using the 75% training split is then applied to the 25% testing split and predictions are measured against the actuals of that split to develop model statistics such as `Accuracy`, `Misclassification`, `Precision`, `Sensitivity` and `Specificity`.
 ```{r Logistic Cross Validation, echo=F, include=T, warning=F}
 #Cross Validation #############################################################################################################
 #Recategorize rare shot types into more common, but similar shot types
@@ -578,12 +562,14 @@ mod_fit <- train(shot_made_flag ~ recId + action_type + game_event_id +
     loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
     shot_type + shot_zone_basic + shot_zone_range + game_date + 
     shot_id + attendance + arena_temp + avgnoisedb + playoffs,  data=training, method="glm", family="binomial",
-                 trControl = ctrl, tuneLength = 5, metric = "RMSE")
-
+                 trControl = ctrl, tuneLength = 5, metric = "logLoss")
 ```
 
-## **Logistic Model Performance:**
-```{r Logistic Model Performance, echo=F, include=T, warning=F}
+
+##**Logstic Regression: External Cross Validation and Model Development**
+
+### As with the Qudratic Discriminant Analysis: External Cross-Valdiation and Model Development section, confusion matricies are used to assess model performance where we will be focusing on `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `Misclassification Rate`, and `AIC`.  `Accuracy` is the number of correct predicitons divided by total observations.  `Precision` is number of correctly classified positive observations over total overservations.  `Sensitivity` is a model's ability to correctly identify positive observations divided by all positive classificaitons. 
+```{r External CV, echo = F, include = T, warning = F}
 
 #confusion matrix https://rpubs.com/dvorakt/255527
 pred = predict(mod_fit, newdata=dfTrain)
@@ -602,12 +588,13 @@ auc <- performance(pred, measure = "auc")
 auc <- auc@y.values[[1]]
 auc
 
+
+
+
+
 #calculate predictions for prediction.Data
 prediction.Data$prob = predict(mod_fit, newdata=df.preds)
 logistic_predictions = prediction.Data %>%
   select(recId,prob)
 write.csv(logistic_predictions,"logistic_predictions.csv")
 ```
-
-
-
