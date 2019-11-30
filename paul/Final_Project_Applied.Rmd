@@ -707,7 +707,7 @@ colnames(confusionFrame.external) <- "External CV Statistics"
 
 
 ### **Confusion Matrix Results for Quadratic Discriminant Analysis**
-```{r Confusion Matrix Tables - QDA, echo=F, include=T, warning=F}
+```{r Confusion Matrix Tables - Logistic, echo=F, include=T, warning=F}
 
 ### Cross-Validation Confusion Matrices for Quadratic Discriminant Analysis
 kable(list(confusionFrame.internal, confusionFrame.external), format="latex", booktabs = T)
