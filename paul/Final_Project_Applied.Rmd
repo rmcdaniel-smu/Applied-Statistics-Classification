@@ -66,9 +66,6 @@ df.preds[which(df.preds$loc_y > 300),"shot_type"] <- "3PT Field Goal"
 df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
 df.preds$shot_type <- ifelse(df.preds$shot_type=="2PT Field Goal", 2, 3)
 
-dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="1", "made", "not_made")
-internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
-
 ```
 
 ## **Variable Elimination**
