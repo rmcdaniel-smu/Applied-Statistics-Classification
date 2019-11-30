@@ -444,22 +444,22 @@ confusionFrame.internal <- data.frame(rbind(round(Sensitivity.confusion.internal
 rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 colnames(confusionFrame.internal) <- "Internal CV Statistics"
 
-suppressWarnings(kable(confusionFrame.internal,
-      format="latex", caption = "Internal Cross-Validation Confusion Matrix", booktabs = T)  %>%
-  kable_styling(position = "center"))
-
 ### External Cross-Validation Confusion Matrix
 confusionFrame.external <- data.frame(rbind(round(Sensitivity.confusion.external, digits=5),round(Specificity.confusion.external, digits=5),round(Precision.confusion.external, digits=5),round(Accuracy.confusion.external, digits=5),round(misclassification.QDA.external, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
 
 rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 colnames(confusionFrame.external) <- "External CV Statistics"
 
-suppressWarnings(kable(confusionFrame.external,
-      format="latex", caption = "External Cross-Validation Confusion Matrix", booktabs = T)  %>%
-  kable_styling(position = "center"))
+```
+\pagebreak
+```{r Confusion Matrix Tables, echo=F, include=T, warning=F}
+
+### Internal Cross-Validation Confusion Matrix
+suppressWarnings(kable(list(confusionFrame.internal, confusionFrame.external),
+      format="latex", booktabs = T)) 
 
 ```
-
+\newpage
 ```{r Predictions from QDA, echo=F, include=F, warnings=F}
 
 # Apply the developed model to the external data that needs predictions:
@@ -476,6 +476,7 @@ df.preds$shot_made_flag <- pred.qda.filtered
 ##############################################################################################################
 
 ```
+
 \newpage
 # Appendix A: Images and Tables
 ### Correlation Heat Map
