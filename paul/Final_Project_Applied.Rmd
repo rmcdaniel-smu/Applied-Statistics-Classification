@@ -7,12 +7,13 @@ author:
 date: |
   Master of Science in Data Science, Southern Methodist University, USA
 lang: en-US
-documentclass: book
+#documentclass: report
 figsintext: true
-numbersections: true
+numbersections: false
 encoding: UTF-8
 bibliography: references.bib
 biblio-style: apalike
+geometry: margin=2cm
 output:
   bookdown::pdf_document2:
      citation_package: natbib
@@ -21,17 +22,17 @@ output:
 editor_options: 
   chunk_output_type: console
 ---
-
 ```{r, Setup and Loading Packages, echo=F, include=F, warning=F}
 
 library(pacman)
-p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics)
+p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics, bookdown)
 # first, install MikTex, then run the R command install_tinytex() in order to generate the PDF from the LaTeX markdown.
 
 df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
 df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
+sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 
 ```
 
@@ -42,11 +43,12 @@ df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=
 ### This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. 
 # **Exploratory Data Analysis**
 
-## **Outlier Check & Transformations**
-### First, the dataset was scanned for missing values. However, there were no missing values identified. Following this, an outlier check was performed, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
+## **Outlier Check**
+### First, we performed a brief outlier check, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
+
+### Additionally, `action_type` was recoded where shots types were categorized into `short` and `not_short`. However, modeling performance decreased because the parameter became less descriptive.
 
 ```{r, outlier check, echo=F, include= F, warning=F}
-sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
 
 # unlist shot data, save into a data frame
 shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
@@ -63,6 +65,9 @@ df.preds[which(df.preds$loc_y > 300),"shot_type"] <- "3PT Field Goal"
 # Convert the points to integer values since they have integer value in reality
 df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
 df.preds$shot_type <- ifelse(df.preds$shot_type=="2PT Field Goal", 2, 3)
+
+dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="1", "made", "not_made")
+internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
 
 ```
 
@@ -106,9 +111,8 @@ tryCatch(
 
 ```
 
-
-
-## **Addressing Multicollinearity: Correlation Plot for Visual Data Exploration**
+## **Addressing Multicollinearity:**
+## **Correlation Plot for Visual Data Exploration**
 ### To address multicollinearity among quantitative predictor variables, a correlation heat map was created for visual inspection of correlation. Please see Appendix A to view this correlation heat map.
 ```{r Multicollinearity, echo=F, include=F, warning=F}
 
@@ -204,10 +208,9 @@ kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
 ### As requested within the requirements of this study, a Linear Discriminant Analysis must be assessed and provided. Discriminant analysis is an operation that compares a categorical response variable against measures of quantitative predictor variables. As a result, analysis for this section is performed on the numerical predictors, which include `recId`, `game_event_id`, `game_id`, `loc_x`, `loc_y`, `minutes_remaining`, `seconds_remaining`, `shot_distance`, `shot_made_flag`, `shot_type`, `game_date`, `shot_id`, `attendance`, `arena_temp`, `avgnoisedb`, controlling collinearity by eliminating a member of each collinear pair prior to model development.
 
 ### `Linear Discriminant Analysis` requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, `Quadratic Discriminant Analysis` (QDA) must be used. `Wilks' Lambda` distribution is used to assess the nature of boundary linearity, which is a required understanding to develop a well-fit discriminant classification model. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used, rather than Wilks' Lambda itself. `Bartlett's Test` is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the `Chi-Square distribution`. This method is applied herein to assess linearity.
-\pagebreak
-\clearpage
+
 ## **Bartlett's Test**
-### The result of the Bartlett's test returned statistically significant results, indicating the null hypothesis of linearity must be rejected in favor of the alternate, which is that the discriminant boundary is non-linear. Consequently, we proceed with a model based on `Quadratic Discriminant Analysis` to provide predictive responses from a discriminant model. However, we proceed with caution, as the quadratic version of the discriminant analysis is at greater risk for over-fitting to the data than Linear Discriminant Analysis as the boundary is required to conform more closely to the data rather than to the mean of the data. This was also taken into consideration when assessing the results of the Logistic Regression model development that occurs afterward.  Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied.
+### The result of the Bartlett's test returned statistically significant results, indicating the null hypothesis of linearity must be rejected in favor of the alternate, which is that the discriminant boundary is non-linear. Consequently, we proceed with a model based on `Quadratic Discriminant Analysis` to provide predictive responses from a discriminant model. However, we proceed with caution, as the quadratic version of the discriminant analysis is at greater risk for over-fitting to the data than Linear Discriminant Analysis as the boundary is required to conform more closely to the data rather than to the mean of the data. This was also taken into consideration when assessing the results of the Logistic Regression model development that occurs afterward.  Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied. Please refer to the Appendix A table `Bartlett Test's Wilks' Lambda Approximation`.
 
 ```{r Quadratic Discriminant Analysis: Test Identification, echo=F, include=F, warning=F}
 
@@ -252,7 +255,7 @@ kable(bartlettsTest,
   kable_styling(position = "center")
 
 ```
-
+\pagebreak
 ### Following the removal of predictor variables after visually inspecting the correlation heat map, we analyzed a correlation matrix. However, the matrix itself did not identify any remaining collinearity at a threshold of correlation necessitating removal of like-terms. Consequently, no further predictor variables are removed. Therefore, modeling data is broken into a 75% training / 25% testing data split for internal cross-cross validation. The objective of internal cross-validation is to develop a model using 75% of the data and test it on the remaining 25% in order to assess model fit statistics. Typically, following internal cross-validation, external cross-validation is performed.
 
 ```{r Make Train and Test Data, echo=F, include=F, warning=F}
@@ -333,8 +336,10 @@ confusion_matrix_results.internal<- confusionMatrix(table(internal_cv.predicted.
 ```
 
 # **Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development**
-\pagebreak
-### After building a model using internal cross-validation, which applied 5 repeated internal cross-validations across the 25 folds of training data, a confusion matrix was constructed and analyzed. Next, we applied the model developed using the 75% training split to make predictions against the entire portion of data that includes values for `shot_made_flag` in order to assess how closely the model can predict against the entire data set compared to the actuals. Applying the model to the entire dataset as `external cross-validation` provides the model an opportunity to test against different data and more closely simulate a real-life scenario than internal cross-validation. Internal and external cross-validation is performed for later Logistic Regression models as well.Following external cross-validation of both models, the metrics are compared to determine the best model (Quadratic Discriminant Analysis versus Logistic Regression).
+### After building a model using internal cross-validation, which applied 5 repeated internal cross-validations across the 25 folds of training data, a confusion matrix was constructed and analyzed. Next, we applied the model developed using the 75% training split to make predictions against the entire portion of data that includes values for `shot_made_flag` in order to assess how closely the model can predict against the entire data set compared to the actuals.
+
+### Applying the model to the entire dataset as `external cross-validation` provides the model an opportunity to test against different data and more closely simulate a real-life scenario than internal cross-validation. Internal and external cross-validation is performed for later Logistic Regression models as well.Following external cross-validation of both models, the metrics are compared to determine the best model (Quadratic Discriminant Analysis versus Logistic Regression).
+
 ```{r Predicting Internal Data for Model Metrics, echo=F, include=F, warning=F}
 
 # apply the model developed above to the entire (75 + 25 = 100%) internal dataset. In other words, make predictions on the data that has results so they can be compared (no folds, no repeats this time):
@@ -385,7 +390,7 @@ misclassification.QDA.internal <- (confusion_matrix_results.internal$table[2,1] 
 #data.frame(misclassification.QDA)
 
 ```
-
+\pagebreak
 ### In addition to the misclassification rate, Accuracy, Precision, Sensitivity, Specificity and Misclassification Rate, the Logarithmic Loss function is applied to measure . A lower logarithmic loss value is desireable as logarithmic loss increases as predicted probability diverges from the actual response values and conversely decreases as predicted probability moves converges toward the actual response values.
 
 ```{r Log Loss Function, echo=F, include=F, warning=F}
@@ -430,24 +435,24 @@ AUC.external <- AUC.external@y.values[[1]]
 confusionFrame.internal <- data.frame(rbind(round(Sensitivity.confusion.internal, digits=5),round(Specificity.confusion.internal, digits=5),round(Precision.confusion.internal, digits=5),round(Accuracy.confusion.internal, digits=5),round(misclassification.QDA.internal, digits=5),round(logLoss.quadratic, digits=5),round(AUC.internal, digits=5)))
 
 rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
-colnames(confusionFrame.internal) <- "Internal CV Statistics: Quadratic Discriminant Analytis"
+colnames(confusionFrame.internal) <- "Internal CV Statistics"
 
 ### External Cross-Validation Confusion Matrix
 confusionFrame.external <- data.frame(rbind(round(Sensitivity.confusion.external, digits=5),round(Specificity.confusion.external, digits=5),round(Precision.confusion.external, digits=5),round(Accuracy.confusion.external, digits=5),round(misclassification.QDA.external, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
 
 rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
-colnames(confusionFrame.external) <- "External CV Statistics: Quadratic Discriminant Analytis"
+colnames(confusionFrame.external) <- "External CV Statistics"
 
 ```
-\pagebreak
+
+### **Confusion Matrix Results for Quadratic Discriminant Analysis**
 ```{r Confusion Matrix Tables - QDA, echo=F, include=T, warning=F}
 
-### Internal Cross-Validation Confusion Matrix
-suppressWarnings(kable(list(confusionFrame.internal, confusionFrame.external),
-      format="latex", booktabs = T)) 
+### Cross-Validation Confusion Matrices for Quadratic Discriminant Analysis
+kable(list(confusionFrame.internal, confusionFrame.external), format="latex", booktabs = T)
 
 ```
-\newpage
+
 ```{r Predictions from QDA, echo=F, include=F, warnings=F}
 
 # Apply the developed model to the external data that needs predictions:
@@ -692,26 +697,28 @@ lr.confusionFrame.internal <- data.frame(rbind(round(lr.Sensitivity.confusion.in
 rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 colnames(confusionFrame.internal) <- "Internal CV Statistics"
 
-suppressWarnings(kable(confusionFrame.internal,
-      format="latex", caption = "Internal Cross-Validation Confusion Matrix", booktabs = T)  %>%
-  kable_styling(position = "center"))
-
 ### External Cross-Validation Confusion Matrix
 confusionFrame.external <- data.frame(rbind(round(lr.Sensitivity.confusion.external, digits=5),round(lr.Specificity.confusion.external, digits=5),round(lr.Precision.confusion.external, digits=5),round(lr.Accuracy.confusion.external, digits=5),round(misclassificationRateEx, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
 
 rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 colnames(confusionFrame.external) <- "External CV Statistics"
 
-suppressWarnings(kable(confusionFrame.external,
-      format="latex", caption = "External Cross-Validation Confusion Matrix", booktabs = T)  %>%
-  kable_styling(position = "center"))
 ```
 
 
+### **Confusion Matrix Results for Quadratic Discriminant Analysis**
+```{r Confusion Matrix Tables - QDA, echo=F, include=T, warning=F}
+
+### Cross-Validation Confusion Matrices for Quadratic Discriminant Analysis
+kable(list(confusionFrame.internal, confusionFrame.external), format="latex", booktabs = T)
+
+```
 
 \newpage
+# Appendix A: Figures and Tables
+*Appendix A contains content related to the paper*
 # Appendix A: Images and Tables
-### Correlation Heat Map
+## **Correlation Heat Map**
 ```{r Heatmap for Appendix, echo=F, include=T, warning=F}
 
 corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
@@ -730,24 +737,22 @@ corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
 
 ```
 
-### Correlation Matrix - Top 10 Collinear Terms
+## **Correlation Matrix - Top 10 Collinear Terms**
 ```{r Correlation Matrix for Appendix, echo=F, include=T, warning=F}
 
-kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
-  kable_styling(latex_options="hold_position")
+kable(collinear.correlation_Ten, format="latex", booktabs = T)
 
 ```
 
-### Bartlett Test's Wilks' Lambda Approximation
+## **Bartlett Test's Wilks' Lambda Approximation**
 ```{r Bartletts Results for Appendix, echo=F, include=T, warning=F}
 
 kable(bartlettsTest,
-      format="latex", caption = "Bartlett Test's Wilks' Lambda Approximation", booktabs = T)  %>%
-  kable_styling(position = "center")
+      format="latex", booktabs = T)
 
 ```
 
-### ROC Curves
+## **ROC Curves**
 ```{r ROC curves, echo=F, include=T, warning=F}
 
 ### Internal Cross-Validation
@@ -758,3 +763,9 @@ plot(perf_step.internal, main = "ROC Curve - Internal CV")
 plot(perf_step.external, main = "ROC Curve - External CV")
 
 ```
+
+\newpage
+\pagebreak
+# Appendix B: Source Code
+*Appendix A contains source code created for this project*
+```{r Source Code, echo=T, warnings=F}
