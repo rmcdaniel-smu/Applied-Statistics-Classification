@@ -771,72 +771,53 @@ suppressWarnings(kable(action_type_ft, format="latex", booktabs = T, longtable =
 # Appendix B: Source Code
 *Appendix A contains source code created for this project*
 ```r
----
-title: "Will Kobe Bryant Make His Next Shot:  Quadratic Discriminant Analysis and Logistic Regression using R"
-author:
-- Paul Adams
-- Reannan McDaniel
-- Jeff Nguyen
-date: |
-  Master of Science in Data Science, Southern Methodist University, USA
-lang: en-US
-#documentclass: report
-figsintext: true
-numbersections: false
-encoding: UTF-8
-bibliography: references.bib
-biblio-style: apalike
-geometry: margin=2cm
-output:
-  bookdown::pdf_document2:
-     citation_package: natbib
-     keep_tex: true
-     toc: true
-editor_options: 
-  chunk_output_type: console
----
-\newpage
-
 
 library(pacman)
 p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics, bookdown)
-# first, install MikTex, then run the R command install_tinytex() in order to generate the PDF from the LaTeX markdown.
 
 df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
-
 df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
-
+```
+```r
+# Check for Missing Values
 sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
-
-# unlist shot data, save into a data frame
-shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
-
-colnames(shotsTaken) <- c("loc_x", "loc_y", "shot_distance")
-
-# simple plot using EVENT_TYPE to colour the dots
-ggplot(shotsTaken, aes(x=loc_x, y=loc_y)) + 
+```
+```r
+# Outlier Plot
+ggplot(data.frame(df$loc_x, df$loc_y, df$shot_distance), aes(x=loc_x, y=loc_y)) + 
   geom_point(aes(colour = df$shot_type))
-
+```
+```r
+# Outlier Imputation
 df[which(df$loc_y > 300),"shot_type"] <- "3PT Field Goal"
 df.preds[which(df.preds$loc_y > 300),"shot_type"] <- "3PT Field Goal"
+```
 
-# Convert the points to integer values since they have integer value in reality
+```r
+# Convert 2PT Field Goal and 3PT Field Goal to 2 and 3
 df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
 df.preds$shot_type <- ifelse(df.preds$shot_type=="2PT Field Goal", 2, 3)
+```
 
-tryCatch(
-    {
-    # Convert all integers to numeric and characters to factors with levels:
-    df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
-    df <- df %>% 
-      subset(select=-c(team_id, # dropping since this is a uniform distribution of data
+```r
+# Convert all characters to factors with levels the models can use
+df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+```
+
+```r
+# Drop categorical variables
+df <- df %>% 
+subset(select=-c(team_id, # dropping since this is a uniform distribution of data
                        team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
                        combined_shot_type, # dropping this in favor of action_type
                        shot_zone_area, # this is ambiguous and less descriptive than geospatial data
                        matchup # removing in favor of opponent; Kobe only played for LAL so that will never change
                       )
               )
-    # create numeric dataframe for correlation plot
+```
+
+```r
+    # Numeric Data Frame for Modeling and Predicting
     df.numeric <- df %>% keep(is.numeric)
     
     df.preds <- df.preds %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
@@ -850,13 +831,10 @@ tryCatch(
               )
     # create numeric dataframe for correlation plot
     df.numeric.preds <- df.preds %>% keep(is.numeric)
-    },
-    error = function(e)
-    {
-      e
-    }
-)
+```
 
+```r
+# Correlation Heat Map
 corr.plot <- corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
                    , title = "Correlation among Predictor Variables"
                    , type = "lower"
@@ -870,7 +848,10 @@ corr.plot <- corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_fl
                    , bg="ivory1"
                    ,tl.srt=.05
 )
+```
 
+```r
+# Dropping variables
 
 df <- df %>% subset(select=-c(lat, # dropping lat because it is collinear with loc_y and shot_distance
                               lon, # dropping lon because it is collinear with loc_x and shot_distance
@@ -888,7 +869,10 @@ df.preds <- df.preds %>% subset(select=-c(lat, # dropping lat because it is coll
 
 df.numeric <- df %>% keep(is.numeric) %>% mutate_if(is.integer, as.numeric)
 df.numeric.preds <- df.preds %>% keep(is.numeric) %>% mutate_if(is.integer, as.numeric)
+```
 
+```r
+# Correlation Matrix
 flattenCorrMatrix <- function(cormatrix, pmatrix) {
   ut <- upper.tri(cormatrix)
   data.frame(
@@ -914,35 +898,36 @@ colnames(cordDF.ordered.Top10) = c("Correlation Predictor Variable", "Correlatio
 cordDF.ordered.Top10$Correlation <- round(as.numeric(as.character(cordDF.ordered.Top10$Correlation)), digits=5)
 
 cordDF.ordered.Top10$`p-Value` <- ifelse(as.numeric(as.character(cordDF.ordered.Top10$`p-Value`)) < 0.0001, "p < 0.0001", as.numeric(as.character(cordDF.ordered.Top10$`p-Value`)))
-
-
-#########
-#write.csv(colinear.correlation, "Collinear_Correlation_Matrix.csv")
-#write.csv(corDF.ordered, "All_Vars_Correlation_Matrix.csv")
-
+```
+```r
+# Correlation Matrix Table
 kable(cordDF.ordered.Top10, format="latex", booktabs = T)  %>%
   kable_styling(latex_options="striped", position = "center")
 
 dfTrain.numeric <- df.numeric[which(!is.na(df.numeric$shot_made_flag)),]
 prediction.Data.numeric <- df.numeric[which(is.na(df.numeric$shot_made_flag)),]
-
+```
+```r
+# Convert shot_made_flag to Qualitative
 dfTrain.numeric$shot_made_flag <- as.factor(dfTrain.numeric$shot_made_flag)
 dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="1", "made", "not_made")
 dfTrain.numeric <- dfTrain.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
-
+```
+```r
+# Bartlett's Test for Wilks' Lambda
 Bartlett_ChiSq <- rrcov::Wilks.test(shot_made_flag ~ ., data=dfTrain.numeric, method = "c", approximation = "Bartlett")
 
-# Wilk's Lambda produces significant p-value in Bartlett's test so we need to use a Quadratic Discriminant Analysis instead of Linear
+Wilk's Lambda produces significant p-value in Bartlett's test so we need to use a Quadratic Discriminant Analysis instead of Linear
 format(round(Bartlett_ChiSq$p.value, 2), nsmall=4)
 
-# Wilks' Lambda plus degrees of freedom used in Bartlett's chi-squared test
+Wilks' Lambda plus degrees of freedom used in Bartlett's chi-squared test
 WilksDegreesofFreedom <- rbind(as.numeric(paste0(Bartlett_ChiSq$parameter, sep = " ")))
 
-# p-value from Bartlett's test
+p-value from Bartlett's test
 Bartlett_ChiSq$p.value
 Bartletts_p <- format(round(as.numeric(Bartlett_ChiSq$p.value), 2), nsmall=4)
 
-# Because Bartlett's p-value is less than 0.0001 (indicated above), updating to shorter form:
+Because Bartlett's p-value is less than 0.0001 (indicated above), updating to shorter form:
 Bartletts_p = ifelse(Bartlett_ChiSq$p.value < 0.0001, "p < 0.0001", Bartlett_ChiSq$p.value)
 #Bartletts_p <- "p < 0.0001"
 
@@ -959,18 +944,19 @@ colnames(bartlettsTest) <- "Statistics"
 kable(bartlettsTest,
       format="latex", booktabs = T)  %>%
   kable_styling(latex_options="striped", position = "center")
-
+```
+```r
 dfTrain <- df[which(!is.na(df$shot_made_flag)),]
 prediction.Data <- df[which(is.na(df$shot_made_flag)),]
 
-### Full Data train/test split for Logistic
+# Full Data train/test split for Logistic
 test_sample_size <- floor(0.75 * nrow(dfTrain))
 set.seed(123)
 train_ind <- sample(seq_len(nrow(dfTrain)), size = test_sample_size)
 subDF.Train <- dfTrain[train_ind, ] #75% training
 subDF.Test <- dfTrain[-train_ind, ] # 25% testing
 
-#### Numeric Data train/test split for QDA
+# Numeric Data train/test split for QDA
 test_sample_size <- floor(0.75 * nrow(dfTrain.numeric))
 set.seed(123)
 train_ind <- sample(seq_len(nrow(dfTrain.numeric)), size = test_sample_size)
@@ -987,40 +973,38 @@ proportion_Posterior <- rbind(mean(kobe.qda$posterior[,1]), mean(kobe.qda$poster
 priori <- data.frame(shot_made_flag_Posterior, proportion_Posterior)
 
 subDF.Train.numeric$shot_made_flag <- as.factor(subDF.Train.numeric$shot_made_flag)
-#subDF.Train.numeric$shot_made_flag <- ifelse(subDF.Train.numeric$shot_made_flag=="1", "made", "not_made")
+subDF.Train.numeric$shot_made_flag <- ifelse(subDF.Train.numeric$shot_made_flag=="1", "made", "not_made")
 subDF.Train.numeric <- subDF.Train.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
 
 # k=25 folds, repeat random folding for internal cross-validation 5 times:
 train.Control <- caret::trainControl(method = "repeatedcv",
                               number = 25,
                               repeats = 5,
-                              #summaryFunction = twoClassSummary,
                               summaryFunction = mnLogLoss,
                               classProbs = T) # classProbs=T to get mnLogLoss (also for twoClassSummary)
 
-# build the model using the 75% partitioned from the internal dataset (the set with all shot_made_flag response results):
+Build Model using the 75% partitioned from the internal dataset (the set with all shot_made_flag response results):
 qda.filtered <- train(shot_made_flag ~ .
                 , data = subDF.Train.numeric
                 , method = "qda"
                 , trControl=train.Control
                 , preProcess = c("center", "scale", "spatialSign")
-                #, preProcess = "spatialSign"
                 , metric = "logLoss"
                  )
 
-# test the model on the 25% partitions from the internal dataset:
+Test Model on Test Set (25%):
 internal_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
 
-# build a confusion matrix for internal cross-validation to see performance:
+# Confusion matrix for Internal Cross-Validation - Quadratic Discriminant Analysis
 confusion_matrix_results.internal<- confusionMatrix(table(internal_cv.predicted.qda, subDF.Test.numeric$shot_made_flag))
 
-# apply the model developed above to the entire (75 + 25 = 100%) internal dataset. In other words, make predictions on the data that has results so they can be compared (no folds, no repeats this time):
+apply the model developed above to the entire (75 + 25 = 100%) internal dataset
 external_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = dfTrain.numeric))
 
-# compare the predicted results to the actual results to make sure model still performs as intended:
+compare the predicted results to the actual results to make sure model still performs as intended:
 confusion_matrix_results.external <- confusionMatrix(table(external_cv.predicted.qda, dfTrain.numeric$shot_made_flag))
 
-######### Internal Cross-Validation Metrics
+# Internal Cross-Validation Metrics - Quadratic Discriminant Analysis
 SpecSense.confusion.internal <- data.frame(confusion_matrix_results.internal$byClass)
 AccuracyP.confusion.internal <- data.frame(confusion_matrix_results.internal$overall)
 
@@ -1029,7 +1013,7 @@ Sensitivity.confusion.internal <- SpecSense.confusion.internal[1,]
 Specificity.confusion.internal <- SpecSense.confusion.internal[2,]
 Precision.confusion.internal <- SpecSense.confusion.internal[5,]
 
-######### External Cross-Validation Metrics
+# External Cross-Validation Metrics - Quadratic Discriminant Analysis
 SpecSense.confusion.external <- data.frame(confusion_matrix_results.external$byClass)
 AccuracyP.confusion.external <- data.frame(confusion_matrix_results.external$overall)
 
@@ -1042,19 +1026,12 @@ misclassification.QDA.external <- (confusion_matrix_results.external$table[2,1] 
 
 misclassification.QDA.internal <- (confusion_matrix_results.internal$table[2,1] + confusion_matrix_results.internal$table[1,2]) / sum(confusion_matrix_results.internal$table)
 
-#misclass <- paste0(round(misclassification.QDA*100, digits=3), "%", sep="")
-#misclass <- data.frame(misclass)
-#colnames(misclass) <- "Misclassification"
-#kable(paste0(round(misclassification.QDA*100, digits=3), "%", sep=""))
-
-#data.frame(misclassification.QDA)
-
 print(logLoss)
 logLoss.quadratic <- qda.filtered$results[1,2]
 logLoss_StDev <- qda.filtered$results[1,3]
 
 dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="made",1,0)
-### Internal Cross-Validation
+# Internal Cross-Validation - Quadratic Discriminant Analysis
 internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
 
 AUCpredStep.internal <- prediction(internal_cv.predicted.qda, as.numeric(subDF.Test.numeric$shot_made_flag))
@@ -1063,7 +1040,7 @@ perf_step.internal <- performance(AUCpredStep.internal, measure = "tpr", x.measu
 AUC.internal <- performance(AUCpredStep.internal, measure = "auc")
 AUC.internal <- AUC.internal@y.values[[1]]
 
-### External Cross-Validation
+# External Cross-Validation - Quadratic Discriminant Analysis
 external_cv.predicted.qda <- ifelse(external_cv.predicted.qda=="made",1,0)
 
 AUCpredStep.external <- prediction(external_cv.predicted.qda, as.numeric(dfTrain.numeric$shot_made_flag))
@@ -1072,12 +1049,12 @@ perf_step.external <- performance(AUCpredStep.external, measure = "tpr", x.measu
 AUC.external <- performance(AUCpredStep.external, measure = "auc")
 AUC.external <- AUC.external@y.values[[1]]
 
-### Internal Cross-Validation Confusion Matrix
+# Internal Cross-Validation Confusion Matrix - Quadratic Discriminant Analysis
 confusionFrame.internal <- data.frame(rbind(round(Sensitivity.confusion.internal, digits=5),round(Specificity.confusion.internal, digits=5),round(Precision.confusion.internal, digits=5),round(Accuracy.confusion.internal, digits=5),round(misclassification.QDA.internal, digits=5),round(logLoss.quadratic, digits=5),round(AUC.internal, digits=5)))
 
 rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 
-### External Cross-Validation Confusion Matrix
+# External Cross-Validation Confusion Matrix - Quadratic Discriminant Analysis
 confusionFrame.external <- data.frame(rbind(round(Sensitivity.confusion.external, digits=5),round(Specificity.confusion.external, digits=5),round(Precision.confusion.external, digits=5),round(Accuracy.confusion.external, digits=5),round(misclassification.QDA.external, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
 
 rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
@@ -1085,17 +1062,18 @@ rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","
 confusionFrame <- data.frame(confusionFrame.internal, confusionFrame.external)
 colnames(confusionFrame) <- c("Internal CV Statistics", "External CV Statistics")
 
-### Cross-Validation Confusion Matrices for Quadratic Discriminant Analysis
+# Cross-Validation Confusion Matrices for Quadratic Discriminant Analysis
 kable(confusionFrame, format="latex", booktabs = T)  %>%
   kable_styling(latex_options="striped", position = "center")
 
-# Apply the developed model to the external data that needs predictions:
+
+# Prediciton Code for Quadratic Discriminant Analysis
 pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = df.numeric.preds))
-
 df.preds$shot_made_flag <- pred.qda.filtered
+write.csv(df.preds, "Predicted_Results.csv", row.names = F)
 
-#write.csv(df.preds, "Predicted_Results.csv", row.names = F)
 
+# Logistic Regression Models
 **Forward Selection Model:** 
 $shot\_made\_flag = action\_type + attendance + arena\_temp + game\_event\_id + season + seconds\_remaining + minutes\_remaining + loc\_y + game\_date + loc\_x$
 
@@ -1106,17 +1084,17 @@ $shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_r
 $shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
 
 
-### Initial Models
+# Initial Models
 model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
 model.Allvar <- glm(shot_made_flag ~ ., family=binomial(link='logit'), data = dfTrain)
-########################################################################
 
-#### Forward Selection
+
+# Forward Selection
 model.Forward <- stepAIC(model.forward.Start, direction = "forward", trace = F, scope = formula(model.Allvar))
 
 summary(model.Forward)
 model.Forward$anova
-#################################### Forward Selection Model Suggestion
+
 forward.glm <- glm(shot_made_flag ~ action_type + attendance + arena_temp + 
     game_event_id + season + seconds_remaining + minutes_remaining + 
     loc_y + game_date + loc_x + playoffs
@@ -1124,13 +1102,13 @@ forward.glm <- glm(shot_made_flag ~ action_type + attendance + arena_temp +
                     , data=dfTrain)
 
 summary(forward.glm)
-########################################################################
+
 
 # Backward Elimination
 model.Backward <- stepAIC(model.Allvar, direction = "backward", trace = F, scope = formula(model.forward.Start))
 summary(model.Backward)
 model.Backward$anova
-#################################### Backward Elimination Model Suggestion
+
 back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
     loc_x + minutes_remaining + season + seconds_remaining +
     shot_distance + game_date + shot_id + attendance + arena_temp
@@ -1139,14 +1117,14 @@ back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
 
 summary(back.glm)
 back.glm$aic
-########################################################################
+
 
 
 # Stepwise Regression
 model.Stepwise <- stepAIC(model.Allvar, direction = "both", trace = F)
 summary(model.Stepwise)
 model.Stepwise$anova
-#################################### Stepwise Regression Model Suggestion
+Stepwise Regression Model Suggestion
 step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
     loc_x + minutes_remaining + season + seconds_remaining +
     shot_distance + game_date + shot_id + attendance + arena_temp
@@ -1163,8 +1141,7 @@ colnames(model_stats) <- c("Selection Type", "AIC", "Residual Deviance")
 kable(model_stats,format="latex", booktabs = T) %>%
   kable_styling(latex_options="striped", position = "center")
 
-#Cross Validation #############################################################################################################
-#Recategorize rare shot types into more common, but similar shot types
+# Recategorize rare shot types into more common, but similar shot types
 dfTrain$action_type = as.character(dfTrain$action_type)
 dfTrain = dfTrain %>% 
   mutate(action_type = if_else(action_type == "Running Tip Shot", 'Tip Shot', action_type))%>%
@@ -1180,20 +1157,18 @@ df.preds = df.preds %>%
   mutate(action_type = if_else(action_type == "Running Slam Dunk Shot",'Slam Dunk Shot',action_type))         
 df.preds$action_type = as.factor(df.preds$action_type)
 
-#K-fold CV
+# K-fold Cross-Validation
 set.seed(100)
 Train <- createDataPartition(dfTrain$shot_made_flag, p=0.75, list=FALSE)
 training <- dfTrain[ Train, ]
 testing <- dfTrain[ -Train, ]
 
-#train for specficity??? option
 ctrl <- trainControl(method = "repeatedcv",
                      number = 25,
                      repeats = 5,
                      classProbs = T)
 
-#combined shot type used instead of action type - test set has action types that are not in the training set
-
+# Generalized Linear Model Training
 mod_fit <- train(shot_made_flag ~ action_type + attendance + arena_temp + 
     game_event_id + seconds_remaining + minutes_remaining + 
     loc_y + game_date + loc_x + playoffs, 
@@ -1203,15 +1178,14 @@ mod_fit <- train(shot_made_flag ~ action_type + attendance + arena_temp +
     tuneLength = 5, 
     metric = "logLoss")
 
-########################################################
-#Interal Model Performance Metrics
-#confusion matrix https://rpubs.com/dvorakt/255527
+
+# Interal Model Performance Metrics
 pred = predict(mod_fit, newdata=testing)
 cf = confusionMatrix(table(data=as.numeric(pred>0.5), testing$shot_made_flag))
 misclassificationRateInternal = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
 
-#ROC/AUC
-# Compute AUC for predicting Class with the model
+# ROC/AUC
+Compute AUC for predicting Class with the model
 pred <- prediction(pred, testing$shot_made_flag)
 perf <- performance(pred, measure = "tpr", x.measure = "fpr")
 
@@ -1226,21 +1200,20 @@ loglossTraining = testing %>%
   #Will generate log loss value
   loglossValue = -1/5174 * sum(loglossTraining$logloss)
 
-########################################################
-#External Model performance Metrics
+# External Model performance Metrics
 ex.pred = predict(mod_fit, newdata=dfTrain)
 ex.cf = confusionMatrix(table(data=as.numeric(ex.pred>0.5), dfTrain$shot_made_flag))
 misclassificationRateEx = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
 
-#ROC/AUC
-# Compute AUC for predicting Class with the model
+# ROC/AUC
+Compute AUC for predicting Class with the model
 expredROC <- prediction(ex.pred, dfTrain$shot_made_flag)
 experf <- performance(expredROC, measure = "tpr", x.measure = "fpr")
 
 aucEx <- performance(expredROC, measure = "auc")
 aucEx <- aucEx@y.values[[1]]
 
-#LOG LOSS AND PREDICTION FOR External CV
+# LOG LOSS AND PREDICTION FOR External CV
 dfTrain$prob = predict(mod_fit, newdata=dfTrain)
 loglossTraining = dfTrain %>%
   mutate(logloss = dfTrain$shot_made_flag * log(1-dfTrain$prob) + (1-dfTrain$shot_made_flag)*log(1-dfTrain$prob))
@@ -1248,7 +1221,7 @@ loglossTraining = dfTrain %>%
   #Will generate log loss value
   loglossValue = -1/20697 * sum(loglossTraining$logloss)
 
-######### Logistic Internal Cross-Validation Metrics
+# Logistic Internal Cross-Validation Metrics
 lr.SpecSense.confusion.internal <- data.frame(cf$byClass)
 lr.AccuracyP.confusion.internal <- data.frame(cf$overall)
 
@@ -1257,7 +1230,7 @@ lr.Sensitivity.confusion.internal <- SpecSense.confusion.internal[1,]
 lr.Specificity.confusion.internal <- SpecSense.confusion.internal[2,]
 lr.Precision.confusion.internal <- SpecSense.confusion.internal[5,]
 
-######### External Cross-Validation Metrics
+#  External Cross-Validation Metrics
 lr.SpecSense.confusion.external <- data.frame(ex.cf$byClass)
 lr.AccuracyP.confusion.external <- data.frame(ex.cf$overall)
 
@@ -1267,12 +1240,12 @@ lr.Specificity.confusion.external <- lr.SpecSense.confusion.external[2,]
 lr.Precision.confusion.external <- lr.SpecSense.confusion.external[5,]
 
 
-### Internal Cross-Validation Confusion Matrix
+# Internal Cross-Validation Confusion Matrix
 lr.confusionFrame.internal <- data.frame(rbind(round(lr.Sensitivity.confusion.internal, digits=5),round(lr.Specificity.confusion.internal, digits=5),round(lr.Precision.confusion.internal, digits=5),round(lr.Accuracy.confusion.internal, digits=5),round(misclassificationRateInternal, digits=5),round(loglossValue, digits=5),round(aucInternal, digits=5)))
 
 rownames(lr.confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 
-### External Cross-Validation Confusion Matrix
+# External Cross-Validation Confusion Matrix
 lr.confusionFrame.external <- data.frame(rbind(round(lr.Sensitivity.confusion.external, digits=5),round(lr.Specificity.confusion.external, digits=5),round(lr.Precision.confusion.external, digits=5),round(lr.Accuracy.confusion.external, digits=5),round(misclassificationRateEx, digits=5),round(loglossValue, digits=5),round(AUC.external, digits=5)))
 
 rownames(lr.confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
@@ -1280,7 +1253,6 @@ rownames(lr.confusionFrame.external) <- c("Sensitivity","Specificity","Precision
 lr.confusionFrame <- data.frame(lr.confusionFrame.internal, lr.confusionFrame.external)
 colnames(lr.confusionFrame) <- c("Internal CV Statistics", "External CV Statistics")
 
-#Tables for 
 suppressWarnings(kable(lr.confusionFrame, format="latex", booktabs = T)) %>%
   kable_styling(latex_options="striped", position = "center")
 
@@ -1289,12 +1261,15 @@ topshots = as.data.frame(coef(mod_fit$finalMode))
 names(topshots)[1] = "Coefficient (logit)"
 topshots$`Odds Ratio` = exp(topshots$`Coefficient (logit)`) 
 topshots =  topshots[order(topshots$`Odds Ratio`),]
+```
 
-#Predicitons
+```r
+# Prediciton Code for Logistic Regression
 df.preds$prob = predict(mod_fit, newdata=df.preds)
 logistic_prediction =  df.preds %>%select(recId, prob)
 write.csv(logistic_prediction,"logistic_prediction.csv")
-
+```
+```r
 suppressWarnings(kable(head(topshots),
       format="latex", booktabs = T)) %>%
   kable_styling(latex_options="striped", position = "center")
