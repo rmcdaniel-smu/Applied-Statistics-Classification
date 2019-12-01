@@ -720,9 +720,9 @@ When analyzing odds for basketball many are interested in the spread, or by how 
 
 There is sufficient evidence to suggest that the shot made odds for Bryant being further from the hoop are less than him being closer to the basket (p-value < 0.041422) with respect to all other covariates.
 
-For every additional foot in distance from the hoop, the estimated odds of making the shot change by e^ 0.00050349=1.0005036. This is for every additional inch in distance, the estimated odds of making the shot decrease by 100.05% (1.0005036)100. A 95% confidence interval for the multiplicative change is (0.00001922857, 0.00098719309) holding all other variables constant.
+For every additional inch in distance from the hoop, the estimated odds of him not making the shot change by e^ 0.00050349=1.0005036. This is for every additional inch in distance, the estimated odds of not making the shot decrease by 1000.05% (1.0005036)100. A 95% confidence interval for the multiplicative change is (0.00001922857, 0.00098719309) holding all other variables constant.
  
-We also were curious if the odds of Bryant making a shot further away from the hoop had a difference during the playoffs. The shot distance is still significant but there is virtually no difference in the odds if the shot was made in a regular season game.  
+We also were curious if the odds of Bryant not making a shot further away from the hoop had a difference during the playoffs. The shot distance is still significant but there is virtually no difference in the odds if the shot was made or not in a regular season game.  
 
 \newpage
 # Appendix A: Figures and Tables
