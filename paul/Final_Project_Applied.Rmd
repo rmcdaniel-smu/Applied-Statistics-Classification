@@ -7,21 +7,18 @@ author:
 date: |
   Master of Science in Data Science, Southern Methodist University, USA
 lang: en-US
-#documentclass: report
 figsintext: true
 numbersections: false
 encoding: UTF-8
-bibliography: references.bib
-biblio-style: apalike
 geometry: margin=2cm
 output:
-  bookdown::pdf_document2:
-     citation_package: natbib
+  bookdown::pdf_book:
      keep_tex: true
      toc: true
-editor_options: 
-  chunk_output_type: console
+header-includes:
+ \usepackage{float}
 ---
+\newpage
 ```{r, Setup and Loading Packages, echo=F, include=F, warning=F}
 
 library(pacman)
@@ -33,22 +30,22 @@ df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, strin
 df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
 
 sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
-
 ```
 
 # **Abstract:**  
-### *This project investigates the correlation between multiple potential explanatory variables and Kobe Bryant's ability to make a shot while playing for the NBA team Los Angeles Lakers using data gathered from `1996`-`2015`.*
+*This project investigates the correlation between multiple potential explanatory variables and Kobe Bryant's ability to make a shot while playing for the NBA team Los Angeles Lakers using data gathered from `1996`-`2015`.*
 
 # **Introduction**
-### This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. This is a sample introduction. Nothing but a sample. But a necessary sample to preserve space. 
+Kobe Bryant, a professional basketball player, spent his entire 20-year career with one team, the LA Lakers as a guard. Bryant started with the Lakers just after high school and went on to win five NBA Championships and 18 All-Star titles. Kobe Bryant’s career average points scored per game is 25-points during the regular season and 26-points during playoffs. In addition to these statistics, using the `KobeData` provided, we were able to determine the odds of Kobe making a shot decreases with respect to his distance from the hoop and the probability of him making a shot decreases after taking into consideration his distance from the hoop and analyze the relationship distance and making a shot during the playoffs. During model selection we considered Area Under the Curve (AUC), Mis-Classification Rate, Sensitivity, Specificity and objective / loss function when making model comparisons.
+
 # **Exploratory Data Analysis**
 
 ## **Outlier Check & Transformations**
-### First, we performed a brief outlier check, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
+First, we performed a brief outlier check, which included a graphical analysis of all shots taken, by loc_x and loc_y. This graphical analysis indicated a 2PT (2-point) Field Goal was recorded from the 3PT (3-point) range. Upon inspection of other attributes - such as action type and shot_zone_range - we verified this shot to be a member member of the 3-point level of shot_type. Under the assumption shots from beyond the 300 inch mark are more likely to have been incorrectly recorded as 2 points rather than an incorrectly recorded location y, we modified our programming to transform all shots where $loc_y > 300$ to be recoded as `3PT Field Gloal`.
 
-### Additionally, `action_type` was recoded where shots types were categorized into `short` and `not_short`. However, modeling performance decreased because the parameter became less descriptive. Further transformations included using indicator variables for `shot_made_flag`, depending on the phase of analysis and modeling.
+Additionally, `action_type` was recoded where shots types were categorized into `short` and `not_short`. However, modeling performance decreased because the parameter became less descriptive. Further transformations included using indicator variables for `shot_made_flag`, depending on the phase of analysis and modeling.
 
-```{r, outlier check, echo=F, include= F, warning=F}
+```{r, outlier check, echo=F, include= T, warning=F, fig.height = 3, fig.width = 5}
 
 # unlist shot data, save into a data frame
 shotsTaken <- data.frame(df$loc_x, df$loc_y, df$shot_distance)
@@ -69,7 +66,7 @@ df.preds$shot_type <- ifelse(df.preds$shot_type=="2PT Field Goal", 2, 3)
 ```
 
 ## **Variable Elimination**
-### Next, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
+Next, we removed one-level factors. These will never change so are not useful to the model; including can cause issues with model sensitivity since linear trajectories will be down-weighted. Therefore, their significance will be lessened by the constant state of the additional parameters. While this is may not be significant, it is not condusive to model quality.
 
 ```{r Transformations Phase Two, echo=F, warning=F}
 
@@ -110,8 +107,8 @@ tryCatch(
 
 ## **Addressing Multicollinearity:**
 ## **Correlation Heat Map for Visual Data Exploration**
-### To address multicollinearity among quantitative predictor variables, a correlation heat map was created for visual inspection of correlation. Please see Appendix A to view this correlation heat map.
-```{r Multicollinearity, echo=F, include=F, warning=F}
+To address multicollinearity among quantitative predictor variables, a correlation heat map (below) was created for visual inspection of correlation. Red corresponds to negative correlation (where an increase in a predictor causes a decrease in the value of its collinear counterpart) whereas blue corresponds to positive correlation.
+```{r Multicollinearity, echo=F, include=T, warning=F, fig.height = 5, fig.width = 10}
 
 corr.plot <- corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
                    , title = "Correlation among Predictor Variables"
@@ -128,10 +125,9 @@ corr.plot <- corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_fl
 )
 
 ```
-\pagebreak
-\cleardoublepage
+
 ## **Post-Correlation Heat Map Variable Elimination**
-### Following our correlation heat map, we decided to eliminate some collinear terms. However, some of the collinearity is useful to capture the instances where the terms are unique. For example, `combined_shot_type` (factor variable) is collinear with `shot_distance` (quantitative variable), but it also accounts for the method Kobe may use to make a shot. For example, distance may be relatively the same between 10 and 11 feet, but the factor levels used to derrive their `short` or `far` indications may differ. This difference could be whether Kobe makes a potentially more accurate heel-planted shot or if he is forced to lean forward and take a riskier shot at basket; the difference in distance may only be one foot, but the difference in technique could measure significant relative to the odds of success.
+Following our correlation heat map, we decided to eliminate some collinear terms. However, some of the collinearity is useful to capture the instances where the terms are unique. For example, `combined_shot_type` (factor variable) is collinear with `shot_distance` (quantitative variable), but it also accounts for the method Kobe may use to make a shot. For example, distance may be relatively the same between 10 and 11 feet, but the factor levels used to derrive their `short` or `far` indications may differ. This difference could be whether Kobe makes a potentially more accurate heel-planted shot or if he is forced to lean forward and take a riskier shot at basket; the difference in distance may only be one foot, but the difference in technique could measure significant relative to the odds of success.
 
 ```{r Post-Correlation Plot Variable Elimination, echo=F, warning=F}
 
@@ -155,7 +151,7 @@ df.numeric.preds <- df.preds %>% keep(is.numeric) %>% mutate_if(is.integer, as.n
 ```
 
 ## **Addressing Multicollinearity: Correlation Matrix for Numerical Analysis**
-### After deselecting the most obvious collinear terms through visually inspection of the correlation plot, a correlation matrix for analyzing the remaining results. Collinear quantitative data was preliminarily removed following correlation plot analysis to desaturate the model to an extent that allows more distinction among significance measures for terms in the correlation matrix. Following the removal of predictor variables after visually inspecting the correlation heat map, we analyzed a correlation matrix. However, the matrix itself did not identify any remaining collinearity at a threshold of correlation necessitating removal of like-terms. Consequently, no further predictor variables are removed. 
+After deselecting the most obvious collinear terms through visually inspection of the correlation plot, a correlation matrix for analyzing the remaining results. Collinear quantitative data was preliminarily removed following correlation plot analysis to desaturate the model to an extent that allows more distinction among significance measures for terms in the correlation matrix. Following the removal of predictor variables after visually inspecting the correlation heat map, we analyzed a correlation matrix. However, the matrix itself did not identify any remaining collinearity at a threshold of correlation necessitating removal of like-terms. Consequently, no further predictor variables are removed. Please refer to the table below for a list of the remaining top 10 collinear terms following first-pass variable removal. While this risks over-fitting, we believed the variables were different enough to capture useful information for the model.
 
 ```{r Correlation Matrix for Quantitative Data, echo=F, include=F, warning=F}
 flattenCorrMatrix <- function(cormatrix, pmatrix) {
@@ -176,16 +172,14 @@ correlation.matrix <- Hmisc::rcorr(as.matrix(df.numeric), type="pearson")
 corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
 
 corDF.ordered <- data.frame(corDF[order(-corDF$cor),])
-collinear.correlation <- corDF[which(corDF$cor >= 0.50),]
+cordDF.ordered.Top10 <- data.frame(head(corDF.ordered, 10))
 
-collinear.correlation <- table(collinear.correlation[order(-collinear.correlation$cor),])
-collinear.correlation_Ten <- head(data.frame(collinear.correlation), 10)
-collinear.correlation_Ten <- collinear.correlation_Ten[,1:4]
-colnames(collinear.correlation_Ten) = c("Correlation Predictor Variable", "Correlation Response Variable", "Correlation", "p-Value")
+colnames(cordDF.ordered.Top10) = c("Correlation Predictor Variable", "Correlation Response Variable", "Correlation", "p-Value")
 
-collinear.correlation_Ten$Correlation <- round(as.numeric(as.character(collinear.correlation_Ten$Correlation)), digits=5)
+cordDF.ordered.Top10$Correlation <- round(as.numeric(as.character(cordDF.ordered.Top10$Correlation)), digits=5)
 
-collinear.correlation_Ten$`p-Value` <- ifelse(as.numeric(as.character(collinear.correlation_Ten$`p-Value`)) < 0.0001, "p < 0.0001", as.numeric(as.character(collinear.correlation_Ten$`p-Value`)))
+cordDF.ordered.Top10$`p-Value` <- ifelse(as.numeric(as.character(cordDF.ordered.Top10$`p-Value`)) < 0.0001, "p < 0.0001", as.numeric(as.character(cordDF.ordered.Top10$`p-Value`)))
+
 
 #########
 #write.csv(colinear.correlation, "Collinear_Correlation_Matrix.csv")
@@ -193,21 +187,18 @@ collinear.correlation_Ten$`p-Value` <- ifelse(as.numeric(as.character(collinear.
 
 ```
 
-```{r Correlation Matrix Table, echo=F, include=F, warning=F, fig.cap = "Top 10 Collinear Terms", size="small"}
+```{r Correlation Matrix Table, echo=F, include=T, warning=F}
 
-kable(collinear.correlation_Ten, format="latex", booktabs = T)  %>%
-  kable_styling(latex_options="hold_position", position = "center")
+kable(cordDF.ordered.Top10, format="latex", booktabs = T)  %>%
+  kable_styling(latex_options="striped", position = "center")
 
 ```
 
 # **Quadratic Discriminant Analysis**
 
-### As requested within the requirements of this study, a Linear Discriminant Analysis must be assessed and provided. Discriminant analysis is an operation that compares a categorical response variable against measures of quantitative predictor variables. As a result, analysis for this section is performed on the numerical predictors, which include `recId`, `game_event_id`, `game_id`, `loc_x`, `loc_y`, `minutes_remaining`, `seconds_remaining`, `shot_distance`, `shot_made_flag`, `shot_type`, `game_date`, `shot_id`, `attendance`, `arena_temp`, `avgnoisedb`, controlling collinearity by eliminating a member of each collinear pair prior to model development.
+As requested within the requirements of this study, a Linear Discriminant Analysis must be assessed and provided. Discriminant analysis is an operation that compares a categorical response variable against measures of quantitative predictor variables. As a result, analysis for this section is performed on the numerical predictors, which include `recId`, `game_event_id`, `game_id`, `loc_x`, `loc_y`, `minutes_remaining`, `seconds_remaining`, `shot_distance`, `shot_made_flag`, `shot_type`, `game_date`, `shot_id`, `attendance`, `arena_temp`, `avgnoisedb`, controlling collinearity by eliminating a member of each collinear pair prior to model development.
 
-### `Linear Discriminant Analysis` requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, `Quadratic Discriminant Analysis` (QDA) must be used. `Wilks' Lambda` distribution is used to assess the nature of boundary linearity, which is a required understanding to develop a well-fit discriminant classification model. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used, rather than Wilks' Lambda itself. `Bartlett's Test` is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the `Chi-Square distribution`. This method is applied herein to assess linearity.
-
-## **Bartlett's Test**
-### The result of the Bartlett's test returned statistically significant results, indicating the null hypothesis of linearity must be rejected in favor of the alternate, which is that the discriminant boundary is non-linear. Consequently, we proceed with a model based on `Quadratic Discriminant Analysis` to provide predictive responses from a discriminant model. However, we proceed with caution, as the quadratic version of the discriminant analysis is at greater risk for over-fitting to the data than Linear Discriminant Analysis as the boundary is required to conform more closely to the data rather than to the mean of the data. This was also taken into consideration when assessing the results of the Logistic Regression model development that occurs afterward.  Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied. Please refer to the table `Bartlett Test's Wilks' Lambda Approximation` below.
+`Linear Discriminant Analysis` requires a linear boundary between the predictor variables, respective of the response. If the boundary between predictors and response is not linear, `Quadratic Discriminant Analysis` (QDA) must be used. `Wilks' Lambda` distribution is used to assess the nature of boundary linearity, which is a required understanding to develop a well-fit discriminant classification model. However, because of the large dimensions of the data set analyzed in this study, an approximation of Wilks' Lambda must be used, rather than Wilks' Lambda itself. `Bartlett's Test` is an approximation of Wilks' Lambda that can be used for models with large dimensions by applying a measure against the `Chi-Square distribution`. This method is applied herein to assess linearity.
 
 ```{r Quadratic Discriminant Analysis: Test Identification, echo=F, include=F, warning=F}
 
@@ -242,19 +233,22 @@ dfBartlett$`Wilks' Lambda` <- round(as.numeric(as.character(dfBartlett$`Wilks' L
 
 bartlettsTest <- data.frame(rbind(dfBartlett$`Chi-Square Statistic`,dfBartlett$`Degrees of Freedom`,dfBartlett$`Wilks' Lambda`,Bartletts_p))
 rownames(bartlettsTest) <- c("Chi Square Statistic","Degrees of Freedom","Wilks' Lambda","p-Value")
-colnames(bartlettsTest) <- "Metric Output"
+colnames(bartlettsTest) <- "Statistics"
 ```
-\pagebreak
+
+
+## **Bartlett's Test**
+The result of the Bartlett's test returned statistically significant results, indicating the null hypothesis of linearity must be rejected in favor of the alternate, which is that the discriminant boundary is non-linear. Consequently, we proceed with a model based on `Quadratic Discriminant Analysis` to provide predictive responses from a discriminant model. However, we proceed with caution, as the quadratic version of the discriminant analysis is at greater risk for over-fitting to the data than Linear Discriminant Analysis as the boundary is required to conform more closely to the data rather than to the mean of the data. This was also taken into consideration when assessing the results of the Logistic Regression model development that occurs afterward.  Bartlett's Test of this data set yielded a significant p-value, where p < 0.0001, indicating that the proportion of distribution beyond the derrived test statistic is beyond that which could be explained by chance. Therefore, we must reject the null hypothesis that the boundary for analysis is linear; the boundary is non-linear. Thus, an analysis using Quadratic Discriminant Analysis is applied. Please refer to the table `Bartlett Test's Wilks' Lambda Approximation` below.
+
 ### **Bartlett Test's Wilks' Lambda Approximation**
 ```{r Bartletts Results, echo=F, include=T, warning=F}
 
 kable(bartlettsTest,
       format="latex", booktabs = T)  %>%
-  kable_styling(position = "center")
+  kable_styling(latex_options="striped", position = "center")
 
 ```
 
-### Immediately preceeding model development, modeling data is broken into a 75% training / 25% testing data split for internal cross-cross validation. The objective of internal cross-validation is to develop a model using 75% of the data and test it on the remaining 25% in order to assess model fit statistics. Typically, following internal cross-validation, external cross-validation is performed.
 
 ```{r Make Train and Test Data, echo=F, include=F, warning=F}
 
@@ -299,7 +293,9 @@ priori <- data.frame(shot_made_flag_Posterior, proportion_Posterior)
 ```
 
 # **Quadratic Discriminant Analysis: Internal Cross-Valdiation and Model Development**
-### Following removal of significant levels of multicollinearity from the dataset and partitioning into a 75% training / 25% testing split, internal cross-validation is performed. The specifics of this test involves 25 folds of the data - meaning the 75% training data is divided into 25 partitions. The model is then trainied on 1/25th of the original 75%, then tested against the remaining 24/25ths, 1/25ths at-a-time. This test is repeated 5 times, with each repeat involving a different random partitioning of the 25 specified `folds` of the data. Finally, the model developed using the 75% training split is then applied to the 25% testing split and predictions are measured against the actuals of that split to develop model statistics such as `Accuracy`, `Misclassification`, `Precision`, `Sensitivity` and `Specificity`.
+Following removal of significant levels of multicollinearity from the dataset and partitioning into a 75% training / 25% testing split, internal cross-validation is performed. The specifics of this test involves 25 folds of the data - meaning the 75% training data is divided into 25 partitions. The model is then trainied on 1/25th of the original 75%, then tested against the remaining 24/25ths, 1/25ths at-a-time. This test is repeated 5 times, with each repeat involving a different random partitioning of the 25 specified `folds` of the data. Finally, the model developed using the 75% training split is then applied to the 25% testing split and predictions are measured against the actuals of that split to develop model statistics such as `Accuracy`, `Misclassification`, `Precision`, `Sensitivity` and `Specificity`.
+
+This is internal cross-validation and its objective is to assist in identifying a model that can perform well across different data sets of the same source by using partitions of data from the same set to simulate an environment where those partitions are actually data from different sets. This is typically performed prior to external cross-validation.
 
 ```{r Model Development & Internal Cross-Validation, echo=F, include=F, warning=F}
 
@@ -334,9 +330,9 @@ confusion_matrix_results.internal<- confusionMatrix(table(internal_cv.predicted.
 ```
 
 # **Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development**
-### After building a model using internal cross-validation, which applied 5 repeated internal cross-validations across the 25 folds of training data, a confusion matrix was constructed and analyzed. Next, we applied the model developed using the 75% training split to make predictions against the entire portion of data that includes values for `shot_made_flag` in order to assess how closely the model can predict against the entire data set compared to the actuals.
+After building a model using internal cross-validation, which applied 5 repeated internal cross-validations across the 25 folds of training data, a confusion matrix was constructed and analyzed. Next, we applied the model developed using the 75% training split to make predictions against the entire portion of data that includes values for `shot_made_flag` in order to assess how closely the model can predict against the entire data set compared to the actuals.
 
-### Applying the model to the entire dataset as `external cross-validation` provides the model an opportunity to test against different data and more closely simulate a real-life scenario than internal cross-validation. Internal and external cross-validation is performed for later Logistic Regression models as well.Following external cross-validation of both models, the metrics are compared to determine the best model (Quadratic Discriminant Analysis versus Logistic Regression).
+Applying the model to the entire dataset as `external cross-validation` provides the model an opportunity to test against different data and more closely simulate a real-life scenario than internal cross-validation. Internal and external cross-validation is performed for later Logistic Regression models as well.Following external cross-validation of both models, the metrics are compared to determine the best model (Quadratic Discriminant Analysis versus Logistic Regression).
 
 ```{r Predicting Internal Data for Model Metrics, echo=F, include=F, warning=F}
 
@@ -370,9 +366,9 @@ Specificity.confusion.external <- SpecSense.confusion.external[2,]
 Precision.confusion.external <- SpecSense.confusion.external[5,]
 
 ```
-### A confusion matrix is a table of results from cross-validation. Some key metrics provided by a confusion matrix include `Accuracy`, `Precision`, `Sensitivity` and `Specificity`. `Accuracy` is the number of all correct predictions divided by the number of all predictions. `Precision` is the ratio of the number of correctly classified positive predictions divided by the number of all positive predictions. `Sensitivity` (also called `Recall`) is the number of correctly classified positive predictions divided by all positive actuals - this is similiar to precision, except that sensitivity measures against actual values. `Specificity` is the number of correctly classified negative predictions divided by all negative actuals. Simplistically, sensitivity is the true positive rate wherease specificity is the true negative rate. Higher Accuracy, Precision, Sensitivity, and Specificity is desireable.
+A confusion matrix is a table of results from cross-validation. Some key metrics provided by a confusion matrix include `Accuracy`, `Precision`, `Sensitivity` and `Specificity`. `Accuracy` is the number of all correct predictions divided by the number of all predictions. `Precision` is the ratio of the number of correctly classified positive predictions divided by the number of all positive predictions. `Sensitivity` (also called `Recall`) is the number of correctly classified positive predictions divided by all positive actuals - this is similiar to precision, except that sensitivity measures against actual values. `Specificity` is the number of correctly classified negative predictions divided by all negative actuals. Simplistically, sensitivity is the true positive rate wherease specificity is the true negative rate. Higher Accuracy, Precision, Sensitivity, and Specificity is desireable.
 
-### Another important component for cross-validation is the `Misclassification Rate`. The Misclassification Rate is a descriptor of how often a model is wrong. This value is equal to the total number of False Positives plus the False Negatives divided by all predictions. A lower misclassification rate is desireable.
+Another important component for cross-validation is the `Misclassification Rate`. The Misclassification Rate is a descriptor of how often a model is wrong. This value is equal to the total number of False Positives plus the False Negatives divided by all predictions. A lower misclassification rate is desireable.
 
 ```{r Misclassification Calculated from Full Internal Dataset, echo=F, include=F, warning=F}
 
@@ -388,8 +384,8 @@ misclassification.QDA.internal <- (confusion_matrix_results.internal$table[2,1] 
 #data.frame(misclassification.QDA)
 
 ```
-\pagebreak
-### In addition to the misclassification rate, Accuracy, Precision, Sensitivity, Specificity and Misclassification Rate, the Logarithmic Loss function is applied to measure . A lower logarithmic loss value is desireable as logarithmic loss increases as predicted probability diverges from the actual response values and conversely decreases as predicted probability moves converges toward the actual response values.
+
+In addition to the misclassification rate, Accuracy, Precision, Sensitivity, Specificity and Misclassification Rate, the Logarithmic Loss function is applied to measure . A lower logarithmic loss value is desireable as logarithmic loss increases as predicted probability diverges from the actual response values and conversely decreases as predicted probability moves converges toward the actual response values.
 
 ```{r Log Loss Function, echo=F, include=F, warning=F}
 
@@ -399,7 +395,7 @@ logLoss_StDev <- qda.filtered$results[1,3]
 
 ```
 
-### Two final metrics used in this analysis are the `Area Under the Curve (AUC)` and `Receiver Operating Characteristic (ROC) curve`. The ROC bounds an area the area which the AUC describes. As a discrimination threshold changes, the ROC visually represents the correct diagnostic ability of a binary classification model and is a plot of the true positive against the false positive rate at those varied thresholds. As the AUC describes the area under this curve, a higher AUC is more desireable than a lower AUC. As mentioned, these metrics will be analyzed when comparing internal to external cross-validation to ensure consistency as well as between the QDA and Logistic Regression models.
+Two final metrics used in this analysis are the `Area Under the Curve (AUC)` and `Receiver Operating Characteristic (ROC) curve`. The ROC bounds an area the area which the AUC describes. As a discrimination threshold changes, the ROC visually represents the correct diagnostic ability of a binary classification model and is a plot of the true positive against the false positive rate at those varied thresholds. As the AUC describes the area under this curve, a higher AUC is more desireable than a lower AUC. As mentioned, these metrics will be analyzed when comparing internal to external cross-validation to ensure consistency as well as between the QDA and Logistic Regression models.
 
 ```{r Quadratic Discrim AUC and ROC, echo=F, include=T, warning=F}
 
@@ -425,7 +421,7 @@ AUC.external <- AUC.external@y.values[[1]]
 ```
 
 # **Quadratic Discriminant Analysis: Internal vs. External Cross-Validation**
-### Using the two confusion matrix output tables immediately below, the performance across internal and external cross-validations of the QDA model can be compared. As indicated in those figures, the model performed highly similarly across both cross-validation techniques, indicating the model is consistent and reasonably fit, after controlling for the variables selected for modeling.
+Using the two confusion matrix output tables immediately below, the performance across internal and external cross-validations of the QDA model can be compared. As indicated in those figures, the model performed highly similarly across both cross-validation techniques, indicating the model is consistent and reasonably fit, after controlling for the variables selected for modeling.
 
 ```{r Confusion Matrix and Metrics Table, echo=F, include=T, warning=F}
 
@@ -453,7 +449,7 @@ kable(confusionFrame, format="latex", booktabs = T)  %>%
 
 ```
 
-```{r Predictions from QDA, echo=F, include=F, warnings=F}
+```{r Predictions from QDA, echo=F, include=F, warning=F}
 
 # Apply the developed model to the external data that needs predictions:
 pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = df.numeric.preds))
@@ -471,22 +467,22 @@ df.preds$shot_made_flag <- pred.qda.filtered
 ```
 # **Logistic Model Development using Ordinary Least Squares**
 
-### Logistc Regression is a classification technique that is best suited for dichotomous response variables - in the case of the Kobe data the response is '0' for shot missed, or '1' for shot made.  Compared to discriminant analysis techniques multiple explanatory variables, interactions, and categorical variables can be used allowing for a potentially more descriptive model.  For this type of regression, coefficients are in log-odds where each coefficient needs to be exponenitated to yeild odds ratios - this is done for ease of interpretation.  Logistic Regression can also be used to generate predictions that yield the probability of an observation having the desired traits of the reposnse variable as occuring or not.  
+Logistic Regression is a classification technique that is best suited for dichotomous response variables - in the case of the Kobe data the response is '0' for shot missed, or '1' for shot made.  Compared to discriminant analysis techniques multiple explanatory variables, interactions, and categorical variables can be used allowing for a potentially more descriptive model.  For this type of regression, coefficients are in log-odds where each coefficient needs to be exponentiated to yield odds ratios - this is done for ease of interpretation.  Logistic Regression can also be used to generate predictions that yield the probability of an observation having the desired traits of the response variable as occurring or not.  
 
-## **Logstic Regression: Model Selection**
+## **Logistic Regression: Model Selection**
 
-###A preliminary, manual veriable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.  These initial models are used by forward, backward, and stepwise model selection methods are used to help select a combination of variables that result in the lowest Residual Deviance and/or AIC.  The selection method that generates the model with the lowest AIC/Residual Deviance is then used for internal cross validation to further tune the model which allows for better prediction.  Below are models that each selection method generated:
+A preliminary, manual variable elimination process was performed during the analysis of multicollinear terms in preparation for model development. Below we perform logistic regression using Ordinary Least Squares (OLS). In preparation for the model development, a starting model and a finishing model must be developed to provide the scope of variable selection.  These initial models are used by forward, backward, and stepwise model selection methods are used to help select a combination of variables that result in the lowest Residual Deviance and/or AIC.  The selection method that generates the model with the lowest AIC/Residual Deviance is then used for internal cross validation to further tune the model which allows for better prediction.  Below are models that each selection method generated:
 
-### Forward Selection Model:
-### $shot_made_flag ~ action_type + attendance + shot_zone_range + arena_temp + game_event_id + season + seconds_remaining + shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date$
+**Forward Selection Model:** 
+$shot\_made\_flag = action\_type + attendance + arena\_temp + game\_event\_id + season + seconds\_remaining + minutes\_remaining + loc\_y + game\_date + loc\_x$
 
-### Backward Elimination Model:
-### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
+**Backward Elimination Model:** 
+$shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
 
-### Stepwise Regression Model:
-### $shot_made_flag ~ recId + action_type + game_event_id + loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + shot_type + shot_zone_basic + shot_zone_range + game_date + shot_id + attendance + arena_temp + avgnoisedb$
+**Stepwise Regression Model:** 
+$shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
 
-```{r Logistic Regression: Model Selection Forward, echo=F, include=F, warning=F}
+```{r Logistic Regression: Model Selection, echo=F, include=F, warning=F}
 ### Initial Models
 model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
 model.Allvar <- glm(shot_made_flag ~ ., family=binomial(link='logit'), data = dfTrain)
@@ -498,44 +494,39 @@ model.Forward <- stepAIC(model.forward.Start, direction = "forward", trace = F, 
 summary(model.Forward)
 model.Forward$anova
 #################################### Forward Selection Model Suggestion
-forward.glm <- glm( shot_made_flag ~ action_type + attendance + shot_zone_range + 
-    arena_temp + game_event_id + season + seconds_remaining + 
-    shot_zone_basic + loc_y + minutes_remaining + loc_x + game_date + playoffs
+forward.glm <- glm(shot_made_flag ~ action_type + attendance + arena_temp + 
+    game_event_id + season + seconds_remaining + minutes_remaining + 
+    loc_y + game_date + loc_x + playoffs
                     , family=binomial(link='logit')
                     , data=dfTrain)
 
 summary(forward.glm)
 ########################################################################
-```
 
-```{r Logistic Regression: Model Selection Backward, echo=F, include=F, warning=F}
 # Backward Elimination
 model.Backward <- stepAIC(model.Allvar, direction = "backward", trace = F, scope = formula(model.forward.Start))
 summary(model.Backward)
 model.Backward$anova
 #################################### Backward Elimination Model Suggestion
-back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
-    loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
-    shot_type + shot_zone_basic + shot_zone_range + game_date + 
-    shot_id + attendance + arena_temp + avgnoisedb
+back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
+    loc_x + minutes_remaining + season + seconds_remaining +
+    shot_distance + game_date + shot_id + attendance + arena_temp
     , family=binomial(link='logit')
     , data=dfTrain)
 
 summary(back.glm)
 back.glm$aic
 ########################################################################
-```
 
-```{r Logistic Regression: Model Selection Stepwise, echo=F, include=F, warning=F}
+
 # Stepwise Regression
 model.Stepwise <- stepAIC(model.Allvar, direction = "both", trace = F)
 summary(model.Stepwise)
 model.Stepwise$anova
 #################################### Stepwise Regression Model Suggestion
-step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id + 
-    loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
-    shot_type + shot_zone_basic + shot_zone_range + game_date + 
-    shot_id + attendance + arena_temp + avgnoisedb
+step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
+    loc_x + minutes_remaining + season + seconds_remaining +
+    shot_distance + game_date + shot_id + attendance + arena_temp
     , family=binomial(link='logit')
     , data=dfTrain)
 
@@ -543,26 +534,22 @@ summary(step.glm)
 step.glm$aic
 ```
 
-## **Logistic Regression: Model Selection Fit-Statistics**
+Based on the fit-statistics generated from each model selection method, the backwards and stepwise models are identical in fit-statistics with an AIC at 25167.77, and the residual deviance at 25001.77.  The forward model selection out-performs both backwards and stepwise models with an AIC of 25166.48, but has a higher a residual deviance at 25001.48.  Compared to the forward selected model, the backwards and stepwise models have lower residual deviances, although their residual deviances are very close in value to the forward model, their AIC values are larger compared to the forward selected model.  Based on the evidence, the forward selected model will be used for the internal and external cross validation process.
+```{r AIC Tables, echo=F, include=T, warning=F}
 
-### Based on the fit-statistics generated from each model selection method, the backwards and stepwise models are identical in fit-statistics.  They both had the lowest AIC at 25095.19, and the lowest residual deviance at 24905.19.  The stepwise model will be used for Cross Validation.
-```{r akaikes foreward, echo=F, include=T, warning=F}
 # Model Selection Statistics AIC and RMSE
-model_stats = data.frame("Selection Type" = c('Forwards','Backwards','Stepwise'),
-                       "AIC" = c(forward.glm$aic,back.glm$aic,step.glm$aic),
-                       "Residual Deviance" = c(forward.glm$deviance,back.glm$deviance,step.glm$deviance))
+model_stats <- data.frame(cbind(rbind("Forwards","Backwards","Stepwise"),rbind(round(forward.glm$aic, digits=2),round(back.glm$aic, digits=2),round(step.glm$aic, digits=2)),rbind(round(forward.glm$deviance, digits=2),round(back.glm$deviance, digits=2),round(step.glm$deviance, digits=2))))
+colnames(model_stats) <- c("Selection Type", "AIC", "Residual Deviance")
 
-kable(model_stats,format="latex", booktabs = T)  %>%
-  kable_styling(position = "center")
+kable(model_stats,format="latex", booktabs = T) %>%
+  kable_styling(latex_options="striped", position = "center")
 
 ```
 
 
-##**Logstic Regression: Internal Cross Validation and Model Development** 
-### Based on the AIC and RMSE statistics generated by model selection, the stepwise model has the lowest AIC SOMEVOLUE at and RMSE at SOMEVALUE.  The stepwise model will then undergo internal cross validation.  The data is split into 75% for training and 25% for testing.
+## **Logistic Regression: Internal Cross Validation and Model Development** 
+After identifying that the forward selected model is the best candidate based on it's AIC and residual deviance, its features are tuned using an internal cross validation.  A training set is generated by randomly selecting 75% of the observations, with the remaining 25% serving as the validation (test) set.  The model is tuned using 25 folds and is repeated 5 times, this process is the same as described in section 5.0.1.  Prior to the internal cross validation process, action types that rarely occur in the data are recoded to similar, but differ action types, i.e. "Running Tip Shot" (1 observation) to "Tip Shot" (many observations).  If levels within the evaluation data exist but are not present in the training data, a trained model will have difficulty making predictions. Infrequently occurring action types are recoded to similar action types to avoid this situation.
 
-
-Following removal of significant levels of multicollinearity from the dataset and partitioning into a 75% training / 25% testing split, internal cross-validation is performed. The specifics of this test involves 25 folds of the data - meaning the 75% training data is divided into 25 partitions. The model is then trainied on 1/25th of the original 75%, then tested against the remaining 24/25ths, 1/25ths at-a-time. This test is repeated 5 times, with each repeat involving a different random partitioning of the 25 specified `folds` of the data. Finally, the model developed using the 75% training split is then applied to the 25% testing split and predictions are measured against the actuals of that split to develop model statistics such as `Accuracy`, `Misclassification`, `Precision`, `Sensitivity` and `Specificity`.
 ```{r Logistic Cross Validation, echo=F, include=T, warning=F}
 #Cross Validation #############################################################################################################
 #Recategorize rare shot types into more common, but similar shot types
@@ -591,29 +578,25 @@ testing <- dfTrain[ -Train, ]
 ctrl <- trainControl(method = "repeatedcv",
                      number = 25,
                      repeats = 5,
-                     summaryFunction = mnLogLoss,
                      classProbs = T)
 
 #combined shot type used instead of action type - test set has action types that are not in the training set
-training$shot_made_flag <- as.integer(training$shot_made_flag)
 
-training$shot_made_flag <- ifelse(training$shot_made_flag == 1, "made", "not_made")
-
-suppressWarnings(mod_fit <- train(shot_made_flag ~ recId + action_type + game_event_id + 
-    loc_x + loc_y + minutes_remaining + playoffs + season + seconds_remaining + 
-    shot_type + shot_zone_basic + shot_zone_range + game_date + 
-    shot_id + attendance + arena_temp + avgnoisedb + playoffs,  data=training, method="glm", family="binomial",
-                 trControl = ctrl, tuneLength = 5, metric = "logLoss"))
-unique(training$shot_made_flag)
-
-#training$shot_made_flag <- ifelse(training$shot_made_flag == "made", 1, 0)
-
+mod_fit <- train(shot_made_flag ~ action_type + attendance + arena_temp + 
+    game_event_id + seconds_remaining + minutes_remaining + 
+    loc_y + game_date + loc_x + playoffs, 
+    data=training, method="glm", 
+    family="binomial", 
+    trControl = ctrl, 
+    tuneLength = 5, 
+    metric = "logLoss")
 ```
 
 
-##**Logstic Regression: External Cross Validation and Model Development**
+## **Logistic Regression: External Cross Validation and Model Development**
+External cross validation is used to evaluate a model after it has been tuned in the internal cross validation process.  External cross validation confusion matrix statistics, ROC/AUC, and misclassification rates can be compared to the internal cross validation statistics to help assess performance.   
+### As with the "Quadratic Discriminant Analysis: External Cross-Validation and Model Development" section, confusion matrices are used to assess model performance where we will be focusing on `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `Misclassification Rate`, `AUC`, and `Log Loss`.  When looking at model performance high values for: `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `AUC` are desirable; and low values for `Misclassification Rate`, and `Log Loss` are desirable.  For descriptions of the mentioned terms please refer to the "Quadratic Discriminant Analysis: External Cross-Validation and Model Development" section for more information.
 
-### As with the "Qudratic Discriminant Analysis: External Cross-Valdiation and Model Development" section, confusion matricies are used to assess model performance where we will be focusing on `Accuracy`, `Precision`, `Sensitivity`, `Specificity`, `Misclassification Rate`,`AUC`, `Log Loss`.  When looking at model performance high values for:`Accuracy`, `Precision`, `Sensitivity`, `Specificity`,`AUC` are desireable; and low values for `Misclassification Rate`, `Log Loss` are desireable.  For descriptions of the mentioned terms please refer to the "Quadratic Discriminant Analysis: External Cross-Valdiation and Model Development" section for more information.
 ```{r External CV, echo = F, include = T, warning = F}
 ########################################################
 #Interal Model Performance Metrics
@@ -621,18 +604,14 @@ unique(training$shot_made_flag)
 pred = predict(mod_fit, newdata=testing)
 cf = confusionMatrix(table(data=as.numeric(pred>0.5), testing$shot_made_flag))
 misclassificationRateInternal = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
-misclassificationRateInternal
 
 #ROC/AUC
 # Compute AUC for predicting Class with the model
 pred <- prediction(pred, testing$shot_made_flag)
 perf <- performance(pred, measure = "tpr", x.measure = "fpr")
-plot(perf, main = "ROC Curve")
-
 
 aucInternal <- performance(pred, measure = "auc")
 aucInternal <- aucInternal@y.values[[1]]
-aucInternal
 
 #LOG LOSS AND PREDICTION FOR TRAINING DATA
 testing$prob = predict(mod_fit, newdata=testing)
@@ -641,25 +620,20 @@ loglossTraining = testing %>%
 
   #Will generate log loss value
   loglossValue = -1/5174 * sum(loglossTraining$logloss)
-  loglossValue
 
 ########################################################
 #External Model performance Metrics
 ex.pred = predict(mod_fit, newdata=dfTrain)
 ex.cf = confusionMatrix(table(data=as.numeric(ex.pred>0.5), dfTrain$shot_made_flag))
 misclassificationRateEx = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
-misclassificationRateEx
 
 #ROC/AUC
 # Compute AUC for predicting Class with the model
 expredROC <- prediction(ex.pred, dfTrain$shot_made_flag)
 experf <- performance(expredROC, measure = "tpr", x.measure = "fpr")
-plot(experf, main = "ROC Curve")
-
 
 aucEx <- performance(expredROC, measure = "auc")
 aucEx <- aucEx@y.values[[1]]
-aucEx
 
 #LOG LOSS AND PREDICTION FOR External CV
 dfTrain$prob = predict(mod_fit, newdata=dfTrain)
@@ -668,10 +642,12 @@ loglossTraining = dfTrain %>%
 
   #Will generate log loss value
   loglossValue = -1/20697 * sum(loglossTraining$logloss)
-  loglossValue
 ```
 
-```{r Confusion Matrix Tables Logistic,echo = F, include = T, warning = F}
+## **Logistic Regression: Internal vs. External Cross-Validation**
+The misclassification rate, and Log loss for both internal and external cross validations are close in values  However the external cross validated model has higher `Sensitivity`, `Precision`, and `Accuracy`; but lower `Specificity` and `Area Under the Curve` compared to the internal cross validated model.  This suggests that model `Sensitivity`, `Precision`, and `Accuracy` improves, but its predictive performance decreases when evaluated using the external cross validation.
+
+```{r Logisitic Confusion Matrix Tables,echo = F, include = T, warning = F}
 ######### Logistic Internal Cross-Validation Metrics
 lr.SpecSense.confusion.internal <- data.frame(cf$byClass)
 lr.AccuracyP.confusion.internal <- data.frame(cf$overall)
@@ -697,34 +673,169 @@ lr.confusionFrame.internal <- data.frame(rbind(round(lr.Sensitivity.confusion.in
 rownames(lr.confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 
 ### External Cross-Validation Confusion Matrix
-lr.confusionFrame.external <- data.frame(rbind(round(lr.Sensitivity.confusion.external, digits=5),round(lr.Specificity.confusion.external, digits=5),round(lr.Precision.confusion.external, digits=5),round(lr.Accuracy.confusion.external, digits=5),round(misclassificationRateEx, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
+lr.confusionFrame.external <- data.frame(rbind(round(lr.Sensitivity.confusion.external, digits=5),round(lr.Specificity.confusion.external, digits=5),round(lr.Precision.confusion.external, digits=5),round(lr.Accuracy.confusion.external, digits=5),round(misclassificationRateEx, digits=5),round(loglossValue, digits=5),round(AUC.external, digits=5)))
 
 rownames(lr.confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
 
-
 lr.confusionFrame <- data.frame(lr.confusionFrame.internal, lr.confusionFrame.external)
-colnames(confusionFrame) <- c("Internal CV Statistics", "External CV Statistics")
+colnames(lr.confusionFrame) <- c("Internal CV Statistics", "External CV Statistics")
 
 ```
 
-
-### **Confusion Matrix Results for Quadratic Discriminant Analysis**
-```{r Confusion Matrix Tables - Logistic, echo=F, include=T, warning=F}
-
-### Cross-Validation Confusion Matrices for Quadratic Discriminant Analysis
-kable(lr.confusionFrame, format="latex", booktabs = T)  %>%
+```{r Logisitic Confusion Matricies, echo=F, include=T, warning=F }
+#Tables for 
+suppressWarnings(kable(lr.confusionFrame, format="latex", booktabs = T)) %>%
   kable_styling(latex_options="striped", position = "center")
 
 ```
 
+## **Logistic Regression: Fitted Model**
+The model was selected for prediction based on having the lowes AIC and residual deviance compared to backwards and stepwise selected models.  The forward selected model was tuned using  k-fold internal cross validation, the forward selected model generated is listed below where Logit coefficents for each feature can also be found in the "Fitted Logistic Regression Model" portion of the appendix
+
+$shot\_made\_flag = action\_type + attendance + arena\_temp + game\_event\_id + season + seconds\_remaining + minutes\_remaining + loc\_y + game\_date + loc\_x$
+
+Several notable features that this model generated are several of the `action_types`.  The odds ratios of Kobe missing a shot are revealed once the coefficients are exponentiated.  In the table below we can see that the odds ratios are all very small.  This suggests that when Kobe performs one of the listed levels of `action_type`, his chances of missing the shot are very low.  The frequency of the `action_type` can also be ascertained by looking at the standard errors from the model output.  Small standard errors for a coefficient suggest that there are a large number of observations with that attribute with a similar outcomes, and a large standard error would suggest that there are fewer observations with a similar outcome.  When moving from the base `action_type` of "Alley Oop Dunk Shot" to "Jump Shot" for every one unit increase in "Jump Shot" the logit value for `shot_made_flag` is approximate -4; in terms of odds ratios, compared to using the "Alley Oop Dunk Shot," Kobe's chances are missing the shot when using the "Jump Shot" is at a factor of approximately 0.016.  The "Jump Shot" also has a standard error of approximately 0.723, this value is much lower compared to the other top shots suggesting that Kobe uses the "Jump Shot" frequently and rarely misses this shot type when he chooses to use it.  When looking at the "Running Finger Roll Shot" the odds ratio of missing this shot when starting from a base level of "Alley Oop Dunk Shot" is approximately 4.5e-8 with a logit standard error of approximately 308; this suggests that when Kobe chooses to use this shot he will rarely use it, but due to the high standard error the number of times that Kobe uses this shot is very low.  When a frequency table of the `action_type` for the whole dataset is created, the total number of times the "Running Finger Roll Shot" occurs is 4 - compared to 12712 observations for "Jump Shot."
+
+```{r fitted model, echo = F, include = T, warning = F}
+
+topshots = as.data.frame(coef(mod_fit$finalMode))
+names(topshots)[1] = "Coefficient (logit)"
+topshots$`Odds Ratio` = exp(topshots$`Coefficient (logit)`) 
+topshots =  topshots[order(topshots$`Odds Ratio`),]
+
+#Predicitons
+df.preds$prob = predict(mod_fit, newdata=df.preds)
+logistic_prediction =  df.preds %>%select(recId, prob)
+#write.csv(logistic_prediction,"logistic_prediction.csv")
+```
+
+```{r top shots, echo=F, include=T, warning=F }
+suppressWarnings(kable(head(topshots),
+      format="latex", booktabs = T)) %>%
+  kable_styling(latex_options="striped", position = "center")
+
+```
+
+#**Shot Made Odds Analysis Using Logistic Regression**
+When analyzing odds for basketball many are interested in the spread, or by how much will the favored team win or lose.  There are many other odds played in professional sports, but we are focused on the odds Bryant making a shot or not relative to his distance from the hoop during regular season games and the playoffs.
+
+There is sufficient evidence to suggest that the shot made odds for Bryant being further from the hoop are less than him being closer to the basket (p-value < 0.041422) with respect to all other covariates.
+
+For every additional foot in distance from the hoop, the estimated odds of making the shot change by e^ 0.00050349=1.0005036. This is for every additional foot in distance, the estimated odds of making the shot decrease by 100.05% (1.0005036)100. A 95% confidence interval for the multiplicative change is (0.00001922857, 0.00098719309) holding all other variables constant.
+ 
+We also were curious if the odds of Bryant making a shot further away from the hoop had a difference during the playoffs. The shot distance is still significant but there is virtually no difference in the odds if the shot was made in a regular season game.  
+
 \newpage
 # Appendix A: Figures and Tables
 *Appendix A contains content related to the paper*
-# Appendix A: Images and Tables
-## **Correlation Heat Map**
-```{r Heatmap for Appendix, echo=F, include=T, warning=F}
+## **ROC Curves**
+```{r ROC curves, echo=F, include=T, warning=F}
 
-corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
+par(mfrow=c(2,2))
+### Internal Cross-Validation
+plot(perf_step.internal, main = "QDA ROC Curve - Internal CV")
+
+### External Cross-Validation
+plot(perf_step.external, main = "QDA ROC Curve - External CV")
+
+plot(perf, main = " Logisitic Regression 
+     ROC Curve - Internal CV")
+plot(experf, main = "Logisitic Regression 
+     ROC Curve - External CV")
+par(mfrow=c(1,1))
+
+```
+
+## **Fitted Logistic Regression Model**
+```{r fitted model coef, echo=F, include=T, warning=F}
+
+modecoef = as.data.frame(coef(mod_fit$finalMode))
+names(modecoef)[1] = "Coefficient (logit)"
+modecoef$`Odds Ratio` = exp(modecoef$`Coefficient (logit)`) 
+
+suppressWarnings(kable(modecoef, format="latex", booktabs = T, longtable = TRUE)) %>%
+  kable_styling(latex_options = c("repeat_header", "striped"), position = "center", font_size = 10)
+```
+
+## **Action Type Frequency Table**
+```{r Action type freq table,echo=F, include=T, warning=F}
+#OPTIONAL - REMOVE IF NECESSARY
+action_type_ft = as.data.frame(table(dfTrain$action_type))
+
+suppressWarnings(kable(action_type_ft, format="latex", booktabs = T, longtable = TRUE)) %>%
+  kable_styling(latex_options = c("repeat_header", "striped"), position = "center", font_size = 10)
+                               
+```
+
+\newpage
+# Appendix B: Source Code
+*Appendix A contains source code created for this project*
+```r
+
+library(pacman)
+p_load(rrcov, MASS, dplyr, purrr, ggplot2, Hmisc, pcaPP, knitr, kableExtra, caret, cluster, robustbase, ROCR, Metrics, bookdown)
+
+df <- read.csv("./modelingKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
+df.preds <- read.csv("./predictionKobeData.csv", header=T, sep=",", strip.white=T, stringsAsFactors = F, na.strings=c(""))
+```
+```r
+# Check for Missing Values
+sapply(df, function(cnt) sum(length(which(is.na(cnt)))))
+```
+```r
+# Outlier Plot
+ggplot(data.frame(df$loc_x, df$loc_y, df$shot_distance), aes(x=loc_x, y=loc_y)) + 
+  geom_point(aes(colour = df$shot_type))
+```
+```r
+# Outlier Imputation
+df[which(df$loc_y > 300),"shot_type"] <- "3PT Field Goal"
+df.preds[which(df.preds$loc_y > 300),"shot_type"] <- "3PT Field Goal"
+```
+
+```r
+# Convert 2PT Field Goal and 3PT Field Goal to 2 and 3
+df$shot_type <- ifelse(df$shot_type=="2PT Field Goal", 2, 3)
+df.preds$shot_type <- ifelse(df.preds$shot_type=="2PT Field Goal", 2, 3)
+```
+
+```r
+# Convert all characters to factors with levels the models can use
+df <- df %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+```
+
+```r
+# Drop categorical variables
+df <- df %>% 
+subset(select=-c(team_id, # dropping since this is a uniform distribution of data
+                       team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
+                       combined_shot_type, # dropping this in favor of action_type
+                       shot_zone_area, # this is ambiguous and less descriptive than geospatial data
+                       matchup # removing in favor of opponent; Kobe only played for LAL so that will never change
+                      )
+              )
+```
+
+```r
+    # Numeric Data Frame for Modeling and Predicting
+    df.numeric <- df %>% keep(is.numeric)
+    
+    df.preds <- df.preds %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+    df.preds <- df.preds %>% 
+      subset(select=-c(team_id, # dropping since this is a uniform distribution of data
+                       team_name, # dropping since this is a uniform distribution of data. Also collinear with team_id
+                       combined_shot_type, # dropping this in favor of action_type
+                       shot_zone_area, # this is ambiguous and less descriptive than geospatial data
+                       matchup # removing in favor of opponent; Kobe only played for LAL so that will never change
+                      )
+              )
+    # create numeric dataframe for correlation plot
+    df.numeric.preds <- df.preds %>% keep(is.numeric)
+```
+
+```r
+# Correlation Heat Map
+corr.plot <- corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
                    , title = "Correlation among Predictor Variables"
                    , type = "lower"
                    , tl.pos = "ld"
@@ -737,38 +848,428 @@ corrplot::corrplot(cor(df.numeric %>% subset(select=-c(shot_made_flag)))
                    , bg="ivory1"
                    ,tl.srt=.05
 )
-
 ```
 
-## **Correlation Matrix - Top 10 Collinear Terms**
-```{r Correlation Matrix for Appendix, echo=F, include=T, warning=F}
+```r
+# Dropping variables
 
-kable(collinear.correlation_Ten, format="latex", booktabs = T)
+df <- df %>% subset(select=-c(lat, # dropping lat because it is collinear with loc_y and shot_distance
+                              lon, # dropping lon because it is collinear with loc_x and shot_distance
+                              period, # dropping period in favor of game event id because game event id is more descriptive and continuous
+                              game_id # dropping playoffs for game_id; game ID can capture playoffs seasonally
+                             )
+                    )
 
+df.preds <- df.preds %>% subset(select=-c(lat, # dropping lat because it is collinear with loc_y and shot_distance
+                              lon, # dropping lon because it is collinear with loc_x and shot_distance
+                              period, # dropping period in favor of game event id because game event id is more descriptive and continuous
+                              game_id # dropping playoffs for game_id; game ID can capture playoffs seasonally
+                             )
+                    )
+
+df.numeric <- df %>% keep(is.numeric) %>% mutate_if(is.integer, as.numeric)
+df.numeric.preds <- df.preds %>% keep(is.numeric) %>% mutate_if(is.integer, as.numeric)
 ```
 
-## **Bartlett Test's Wilks' Lambda Approximation**
-```{r Bartletts Results for Appendix, echo=F, include=T, warning=F}
+```r
+# Correlation Matrix
+flattenCorrMatrix <- function(cormatrix, pmatrix) {
+  ut <- upper.tri(cormatrix)
+  data.frame(
+    row = rownames(cormatrix)[row(cormatrix)[ut]],
+    column = rownames(cormatrix)[col(cormatrix)[ut]],
+    cor  =(cormatrix)[ut],
+    p = pmatrix[ut]
+  )
+}
+
+options(scipen=999)
+options(max.print=100000)
+
+#See what variables are correlated with eachother, p-values
+correlation.matrix <- Hmisc::rcorr(as.matrix(df.numeric), type="pearson")
+corDF <- data.frame(flattenCorrMatrix(correlation.matrix$r, correlation.matrix$P))
+
+corDF.ordered <- data.frame(corDF[order(-corDF$cor),])
+cordDF.ordered.Top10 <- data.frame(head(corDF.ordered, 10))
+
+colnames(cordDF.ordered.Top10) = c("Correlation Predictor Variable", "Correlation Response Variable", "Correlation", "p-Value")
+
+cordDF.ordered.Top10$Correlation <- round(as.numeric(as.character(cordDF.ordered.Top10$Correlation)), digits=5)
+
+cordDF.ordered.Top10$`p-Value` <- ifelse(as.numeric(as.character(cordDF.ordered.Top10$`p-Value`)) < 0.0001, "p < 0.0001", as.numeric(as.character(cordDF.ordered.Top10$`p-Value`)))
+```
+```r
+# Correlation Matrix Table
+kable(cordDF.ordered.Top10, format="latex", booktabs = T)  %>%
+  kable_styling(latex_options="striped", position = "center")
+
+dfTrain.numeric <- df.numeric[which(!is.na(df.numeric$shot_made_flag)),]
+prediction.Data.numeric <- df.numeric[which(is.na(df.numeric$shot_made_flag)),]
+```
+```r
+# Convert shot_made_flag to Qualitative
+dfTrain.numeric$shot_made_flag <- as.factor(dfTrain.numeric$shot_made_flag)
+dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="1", "made", "not_made")
+dfTrain.numeric <- dfTrain.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+```
+```r
+# Bartlett's Test for Wilks' Lambda
+Bartlett_ChiSq <- rrcov::Wilks.test(shot_made_flag ~ ., data=dfTrain.numeric, method = "c", approximation = "Bartlett")
+
+Wilk's Lambda produces significant p-value in Bartlett's test so we need to use a Quadratic Discriminant Analysis instead of Linear
+format(round(Bartlett_ChiSq$p.value, 2), nsmall=4)
+
+Wilks' Lambda plus degrees of freedom used in Bartlett's chi-squared test
+WilksDegreesofFreedom <- rbind(as.numeric(paste0(Bartlett_ChiSq$parameter, sep = " ")))
+
+p-value from Bartlett's test
+Bartlett_ChiSq$p.value
+Bartletts_p <- format(round(as.numeric(Bartlett_ChiSq$p.value), 2), nsmall=4)
+
+Because Bartlett's p-value is less than 0.0001 (indicated above), updating to shorter form:
+Bartletts_p = ifelse(Bartlett_ChiSq$p.value < 0.0001, "p < 0.0001", Bartlett_ChiSq$p.value)
+#Bartletts_p <- "p < 0.0001"
+
+dfBartlett <- data.frame(WilksDegreesofFreedom, Bartlett_ChiSq$wilks, Bartletts_p)
+colnames(dfBartlett) <- c("Chi-Square Statistic", "Degrees of Freedom", "Wilks' Lambda", "p-Value")
+
+dfBartlett$`Chi-Square Statistic` <- round(as.numeric(as.character(dfBartlett$`Chi-Square Statistic`)), digits=5)
+dfBartlett$`Wilks' Lambda` <- round(as.numeric(as.character(dfBartlett$`Wilks' Lambda`)), digits=5)
+
+bartlettsTest <- data.frame(rbind(dfBartlett$`Chi-Square Statistic`,dfBartlett$`Degrees of Freedom`,dfBartlett$`Wilks' Lambda`,Bartletts_p))
+rownames(bartlettsTest) <- c("Chi Square Statistic","Degrees of Freedom","Wilks' Lambda","p-Value")
+colnames(bartlettsTest) <- "Statistics"
 
 kable(bartlettsTest,
-      format="latex", booktabs = T)
+      format="latex", booktabs = T)  %>%
+  kable_styling(latex_options="striped", position = "center")
+```
+```r
+dfTrain <- df[which(!is.na(df$shot_made_flag)),]
+prediction.Data <- df[which(is.na(df$shot_made_flag)),]
 
+# Full Data train/test split for Logistic
+test_sample_size <- floor(0.75 * nrow(dfTrain))
+set.seed(123)
+train_ind <- sample(seq_len(nrow(dfTrain)), size = test_sample_size)
+subDF.Train <- dfTrain[train_ind, ] #75% training
+subDF.Test <- dfTrain[-train_ind, ] # 25% testing
+
+# Numeric Data train/test split for QDA
+test_sample_size <- floor(0.75 * nrow(dfTrain.numeric))
+set.seed(123)
+train_ind <- sample(seq_len(nrow(dfTrain.numeric)), size = test_sample_size)
+subDF.Train.numeric <- dfTrain.numeric[train_ind, ] #75% training
+subDF.Test.numeric <- dfTrain.numeric[-train_ind, ] # 25% testing
+
+
+kobe.qda <- qda(shot_made_flag ~ ., CV=T, data=dfTrain.numeric)
+
+data.frame(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
+
+shot_made_flag_Posterior <- rbind("0", "1")
+proportion_Posterior <- rbind(mean(kobe.qda$posterior[,1]), mean(kobe.qda$posterior[,2]))
+priori <- data.frame(shot_made_flag_Posterior, proportion_Posterior)
+
+subDF.Train.numeric$shot_made_flag <- as.factor(subDF.Train.numeric$shot_made_flag)
+subDF.Train.numeric$shot_made_flag <- ifelse(subDF.Train.numeric$shot_made_flag=="1", "made", "not_made")
+subDF.Train.numeric <- subDF.Train.numeric %>% mutate_if(is.integer, as.numeric) %>% mutate_if(is.character, as.factor) %>% data.frame()
+
+# k=25 folds, repeat random folding for internal cross-validation 5 times:
+train.Control <- caret::trainControl(method = "repeatedcv",
+                              number = 25,
+                              repeats = 5,
+                              summaryFunction = mnLogLoss,
+                              classProbs = T) # classProbs=T to get mnLogLoss (also for twoClassSummary)
+
+Build Model using the 75% partitioned from the internal dataset (the set with all shot_made_flag response results):
+qda.filtered <- train(shot_made_flag ~ .
+                , data = subDF.Train.numeric
+                , method = "qda"
+                , trControl=train.Control
+                , preProcess = c("center", "scale", "spatialSign")
+                , metric = "logLoss"
+                 )
+
+Test Model on Test Set (25%):
+internal_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = subDF.Test.numeric))
+
+# Confusion matrix for Internal Cross-Validation - Quadratic Discriminant Analysis
+confusion_matrix_results.internal<- confusionMatrix(table(internal_cv.predicted.qda, subDF.Test.numeric$shot_made_flag))
+
+apply the model developed above to the entire (75 + 25 = 100%) internal dataset
+external_cv.predicted.qda <- suppressWarnings(predict(qda.filtered, newdata = dfTrain.numeric))
+
+compare the predicted results to the actual results to make sure model still performs as intended:
+confusion_matrix_results.external <- confusionMatrix(table(external_cv.predicted.qda, dfTrain.numeric$shot_made_flag))
+
+# Internal Cross-Validation Metrics - Quadratic Discriminant Analysis
+SpecSense.confusion.internal <- data.frame(confusion_matrix_results.internal$byClass)
+AccuracyP.confusion.internal <- data.frame(confusion_matrix_results.internal$overall)
+
+Accuracy.confusion.internal <- AccuracyP.confusion.internal[1,]
+Sensitivity.confusion.internal <- SpecSense.confusion.internal[1,]
+Specificity.confusion.internal <- SpecSense.confusion.internal[2,]
+Precision.confusion.internal <- SpecSense.confusion.internal[5,]
+
+# External Cross-Validation Metrics - Quadratic Discriminant Analysis
+SpecSense.confusion.external <- data.frame(confusion_matrix_results.external$byClass)
+AccuracyP.confusion.external <- data.frame(confusion_matrix_results.external$overall)
+
+Accuracy.confusion.external <- AccuracyP.confusion.external[1,]
+Sensitivity.confusion.external <- SpecSense.confusion.external[1,]
+Specificity.confusion.external <- SpecSense.confusion.external[2,]
+Precision.confusion.external <- SpecSense.confusion.external[5,]
+
+misclassification.QDA.external <- (confusion_matrix_results.external$table[2,1] + confusion_matrix_results.external$table[1,2]) / sum(confusion_matrix_results.external$table)
+
+misclassification.QDA.internal <- (confusion_matrix_results.internal$table[2,1] + confusion_matrix_results.internal$table[1,2]) / sum(confusion_matrix_results.internal$table)
+
+print(logLoss)
+logLoss.quadratic <- qda.filtered$results[1,2]
+logLoss_StDev <- qda.filtered$results[1,3]
+
+dfTrain.numeric$shot_made_flag <- ifelse(dfTrain.numeric$shot_made_flag=="made",1,0)
+# Internal Cross-Validation - Quadratic Discriminant Analysis
+internal_cv.predicted.qda <- ifelse(internal_cv.predicted.qda=="made",1,0)
+
+AUCpredStep.internal <- prediction(internal_cv.predicted.qda, as.numeric(subDF.Test.numeric$shot_made_flag))
+perf_step.internal <- performance(AUCpredStep.internal, measure = "tpr", x.measure = "fpr")
+
+AUC.internal <- performance(AUCpredStep.internal, measure = "auc")
+AUC.internal <- AUC.internal@y.values[[1]]
+
+# External Cross-Validation - Quadratic Discriminant Analysis
+external_cv.predicted.qda <- ifelse(external_cv.predicted.qda=="made",1,0)
+
+AUCpredStep.external <- prediction(external_cv.predicted.qda, as.numeric(dfTrain.numeric$shot_made_flag))
+perf_step.external <- performance(AUCpredStep.external, measure = "tpr", x.measure = "fpr")
+
+AUC.external <- performance(AUCpredStep.external, measure = "auc")
+AUC.external <- AUC.external@y.values[[1]]
+
+# Internal Cross-Validation Confusion Matrix - Quadratic Discriminant Analysis
+confusionFrame.internal <- data.frame(rbind(round(Sensitivity.confusion.internal, digits=5),round(Specificity.confusion.internal, digits=5),round(Precision.confusion.internal, digits=5),round(Accuracy.confusion.internal, digits=5),round(misclassification.QDA.internal, digits=5),round(logLoss.quadratic, digits=5),round(AUC.internal, digits=5)))
+
+rownames(confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+
+# External Cross-Validation Confusion Matrix - Quadratic Discriminant Analysis
+confusionFrame.external <- data.frame(rbind(round(Sensitivity.confusion.external, digits=5),round(Specificity.confusion.external, digits=5),round(Precision.confusion.external, digits=5),round(Accuracy.confusion.external, digits=5),round(misclassification.QDA.external, digits=5),round(logLoss.quadratic, digits=5),round(AUC.external, digits=5)))
+
+rownames(confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+
+confusionFrame <- data.frame(confusionFrame.internal, confusionFrame.external)
+colnames(confusionFrame) <- c("Internal CV Statistics", "External CV Statistics")
+
+# Cross-Validation Confusion Matrices for Quadratic Discriminant Analysis
+kable(confusionFrame, format="latex", booktabs = T)  %>%
+  kable_styling(latex_options="striped", position = "center")
+
+
+# Prediciton Code for Quadratic Discriminant Analysis
+pred.qda.filtered <- suppressWarnings(predict(qda.filtered, newdata = df.numeric.preds))
+df.preds$shot_made_flag <- pred.qda.filtered
+write.csv(df.preds, "Predicted_Results.csv", row.names = F)
+
+
+# Logistic Regression Models
+**Forward Selection Model:** 
+$shot\_made\_flag = action\_type + attendance + arena\_temp + game\_event\_id + season + seconds\_remaining + minutes\_remaining + loc\_y + game\_date + loc\_x$
+
+**Backward Elimination Model:** 
+$shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
+
+**Stepwise Regression Model:** 
+$shot\_made\_flag = recId + action\_type + game\_event\_id + loc\_x + minutes\_remaining + season + seconds\_remaining + shot\_distance + game\_date + shot\_id + attendance + arena\_temp$
+
+
+# Initial Models
+model.forward.Start <- glm(shot_made_flag~1, family=binomial(link='logit'), data = dfTrain)
+model.Allvar <- glm(shot_made_flag ~ ., family=binomial(link='logit'), data = dfTrain)
+
+
+# Forward Selection
+model.Forward <- stepAIC(model.forward.Start, direction = "forward", trace = F, scope = formula(model.Allvar))
+
+summary(model.Forward)
+model.Forward$anova
+
+forward.glm <- glm(shot_made_flag ~ action_type + attendance + arena_temp + 
+    game_event_id + season + seconds_remaining + minutes_remaining + 
+    loc_y + game_date + loc_x + playoffs
+                    , family=binomial(link='logit')
+                    , data=dfTrain)
+
+summary(forward.glm)
+
+
+# Backward Elimination
+model.Backward <- stepAIC(model.Allvar, direction = "backward", trace = F, scope = formula(model.forward.Start))
+summary(model.Backward)
+model.Backward$anova
+
+back.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
+    loc_x + minutes_remaining + season + seconds_remaining +
+    shot_distance + game_date + shot_id + attendance + arena_temp
+    , family=binomial(link='logit')
+    , data=dfTrain)
+
+summary(back.glm)
+back.glm$aic
+
+
+
+# Stepwise Regression
+model.Stepwise <- stepAIC(model.Allvar, direction = "both", trace = F)
+summary(model.Stepwise)
+model.Stepwise$anova
+Stepwise Regression Model Suggestion
+step.glm <- glm(shot_made_flag ~ recId + action_type + game_event_id +
+    loc_x + minutes_remaining + season + seconds_remaining +
+    shot_distance + game_date + shot_id + attendance + arena_temp
+    , family=binomial(link='logit')
+    , data=dfTrain)
+
+summary(step.glm)
+step.glm$aic
+
+# Model Selection Statistics AIC and RMSE
+model_stats <- data.frame(cbind(rbind("Forwards","Backwards","Stepwise"),rbind(round(forward.glm$aic, digits=2),round(back.glm$aic, digits=2),round(step.glm$aic, digits=2)),rbind(round(forward.glm$deviance, digits=2),round(back.glm$deviance, digits=2),round(step.glm$deviance, digits=2))))
+colnames(model_stats) <- c("Selection Type", "AIC", "Residual Deviance")
+
+kable(model_stats,format="latex", booktabs = T) %>%
+  kable_styling(latex_options="striped", position = "center")
+
+# Recategorize rare shot types into more common, but similar shot types
+dfTrain$action_type = as.character(dfTrain$action_type)
+dfTrain = dfTrain %>% 
+  mutate(action_type = if_else(action_type == "Running Tip Shot", 'Tip Shot', action_type))%>%
+  mutate(action_type = if_else(action_type == "Tip Layup Shot", 'Tip Shot', action_type)) %>%
+  mutate(action_type = if_else(action_type == "Putback Slam Dunk Shot","Slam Dunk Shot",action_type)) %>%
+  mutate(action_type = if_else(action_type == "Running Slam Dunk Shot","Slam Dunk Shot",action_type))
+dfTrain$action_type = as.factor(dfTrain$action_type)
+
+df.preds$action_type = as.character(df.preds$action_type)
+df.preds = df.preds %>% 
+  mutate(action_type = if_else(action_type == "Turnaround Finger Roll Shot", 'Finger Roll Shot', action_type)) %>%
+  mutate(action_type = if_else(action_type == "Putback Slam Dunk Shot",'Slam Dunk Shot',action_type)) %>%
+  mutate(action_type = if_else(action_type == "Running Slam Dunk Shot",'Slam Dunk Shot',action_type))         
+df.preds$action_type = as.factor(df.preds$action_type)
+
+# K-fold Cross-Validation
+set.seed(100)
+Train <- createDataPartition(dfTrain$shot_made_flag, p=0.75, list=FALSE)
+training <- dfTrain[ Train, ]
+testing <- dfTrain[ -Train, ]
+
+ctrl <- trainControl(method = "repeatedcv",
+                     number = 25,
+                     repeats = 5,
+                     classProbs = T)
+
+# Generalized Linear Model Training
+mod_fit <- train(shot_made_flag ~ action_type + attendance + arena_temp + 
+    game_event_id + seconds_remaining + minutes_remaining + 
+    loc_y + game_date + loc_x + playoffs, 
+    data=training, method="glm", 
+    family="binomial", 
+    trControl = ctrl, 
+    tuneLength = 5, 
+    metric = "logLoss")
+
+
+# Interal Model Performance Metrics
+pred = predict(mod_fit, newdata=testing)
+cf = confusionMatrix(table(data=as.numeric(pred>0.5), testing$shot_made_flag))
+misclassificationRateInternal = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
+
+# ROC/AUC
+Compute AUC for predicting Class with the model
+pred <- prediction(pred, testing$shot_made_flag)
+perf <- performance(pred, measure = "tpr", x.measure = "fpr")
+
+aucInternal <- performance(pred, measure = "auc")
+aucInternal <- aucInternal@y.values[[1]]
+
+#LOG LOSS AND PREDICTION FOR TRAINING DATA
+testing$prob = predict(mod_fit, newdata=testing)
+loglossTraining = testing %>%
+  mutate(logloss = testing$shot_made_flag * log(1-testing$prob) + (1-testing$shot_made_flag)*log(1-testing$prob))
+
+  #Will generate log loss value
+  loglossValue = -1/5174 * sum(loglossTraining$logloss)
+
+# External Model performance Metrics
+ex.pred = predict(mod_fit, newdata=dfTrain)
+ex.cf = confusionMatrix(table(data=as.numeric(ex.pred>0.5), dfTrain$shot_made_flag))
+misclassificationRateEx = (cf$table[2,1]+cf$table[1,2]) / sum(cf$table)
+
+# ROC/AUC
+Compute AUC for predicting Class with the model
+expredROC <- prediction(ex.pred, dfTrain$shot_made_flag)
+experf <- performance(expredROC, measure = "tpr", x.measure = "fpr")
+
+aucEx <- performance(expredROC, measure = "auc")
+aucEx <- aucEx@y.values[[1]]
+
+# LOG LOSS AND PREDICTION FOR External CV
+dfTrain$prob = predict(mod_fit, newdata=dfTrain)
+loglossTraining = dfTrain %>%
+  mutate(logloss = dfTrain$shot_made_flag * log(1-dfTrain$prob) + (1-dfTrain$shot_made_flag)*log(1-dfTrain$prob))
+
+  #Will generate log loss value
+  loglossValue = -1/20697 * sum(loglossTraining$logloss)
+
+# Logistic Internal Cross-Validation Metrics
+lr.SpecSense.confusion.internal <- data.frame(cf$byClass)
+lr.AccuracyP.confusion.internal <- data.frame(cf$overall)
+
+lr.Accuracy.confusion.internal <- AccuracyP.confusion.internal[1,]
+lr.Sensitivity.confusion.internal <- SpecSense.confusion.internal[1,]
+lr.Specificity.confusion.internal <- SpecSense.confusion.internal[2,]
+lr.Precision.confusion.internal <- SpecSense.confusion.internal[5,]
+
+#  External Cross-Validation Metrics
+lr.SpecSense.confusion.external <- data.frame(ex.cf$byClass)
+lr.AccuracyP.confusion.external <- data.frame(ex.cf$overall)
+
+lr.Accuracy.confusion.external <- lr.AccuracyP.confusion.external[1,]
+lr.Sensitivity.confusion.external <- lr.SpecSense.confusion.external[1,]
+lr.Specificity.confusion.external <- lr.SpecSense.confusion.external[2,]
+lr.Precision.confusion.external <- lr.SpecSense.confusion.external[5,]
+
+
+# Internal Cross-Validation Confusion Matrix
+lr.confusionFrame.internal <- data.frame(rbind(round(lr.Sensitivity.confusion.internal, digits=5),round(lr.Specificity.confusion.internal, digits=5),round(lr.Precision.confusion.internal, digits=5),round(lr.Accuracy.confusion.internal, digits=5),round(misclassificationRateInternal, digits=5),round(loglossValue, digits=5),round(aucInternal, digits=5)))
+
+rownames(lr.confusionFrame.internal) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+
+# External Cross-Validation Confusion Matrix
+lr.confusionFrame.external <- data.frame(rbind(round(lr.Sensitivity.confusion.external, digits=5),round(lr.Specificity.confusion.external, digits=5),round(lr.Precision.confusion.external, digits=5),round(lr.Accuracy.confusion.external, digits=5),round(misclassificationRateEx, digits=5),round(loglossValue, digits=5),round(AUC.external, digits=5)))
+
+rownames(lr.confusionFrame.external) <- c("Sensitivity","Specificity","Precision","Accuracy","Misclassification Rate","Logarithmic Loss","Area Under the Curve")
+
+lr.confusionFrame <- data.frame(lr.confusionFrame.internal, lr.confusionFrame.external)
+colnames(lr.confusionFrame) <- c("Internal CV Statistics", "External CV Statistics")
+
+suppressWarnings(kable(lr.confusionFrame, format="latex", booktabs = T)) %>%
+  kable_styling(latex_options="striped", position = "center")
+
+
+topshots = as.data.frame(coef(mod_fit$finalMode))
+names(topshots)[1] = "Coefficient (logit)"
+topshots$`Odds Ratio` = exp(topshots$`Coefficient (logit)`) 
+topshots =  topshots[order(topshots$`Odds Ratio`),]
 ```
 
-## **ROC Curves**
-```{r ROC curves, echo=F, include=T, warning=F}
-
-### Internal Cross-Validation
-plot(perf_step.internal, main = "ROC Curve - Internal CV")
-
-
-### External Cross-Validation
-plot(perf_step.external, main = "ROC Curve - External CV")
-
+```r
+# Prediciton Code for Logistic Regression
+df.preds$prob = predict(mod_fit, newdata=df.preds)
+logistic_prediction =  df.preds %>%select(recId, prob)
+write.csv(logistic_prediction,"logistic_prediction.csv")
 ```
-
-\newpage
-\pagebreak
-# Appendix B: Source Code
-*Appendix A contains source code created for this project*
-```{r Source Code, echo=T, warnings=F}
+```r
+suppressWarnings(kable(head(topshots),
+      format="latex", booktabs = T)) %>%
+  kable_styling(latex_options="striped", position = "center")
