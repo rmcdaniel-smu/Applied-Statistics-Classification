@@ -709,9 +709,9 @@ topshots$`Odds Ratio` = exp(topshots$`Coefficient (logit)`)
 topshots =  topshots[order(topshots$`Odds Ratio`),]
 
 #Predicitons
-#df.preds$prob = predict(mod_fit, newdata=df.preds)
-#logistic_prediction =  df.preds %>%select(recId, prob)
-#write.csv(logistic_prediction,"logistic_prediction.csv")
+df.preds$prob = predict(mod_fit, newdata=df.preds)
+logistic_prediction =  df.preds %>%select(recId, prob)
+write.csv(logistic_prediction,"logistic_prediction.csv")
 ```
 
 ```{r top shots, echo=F, include=T, warning=F }
@@ -786,7 +786,6 @@ modecoef$`Odds Ratio` = exp(modecoef$`Coefficient (logit)`)
 
 suppressWarnings(kable(modecoef, format="latex", booktabs = T, longtable = TRUE)) %>%
   kable_styling(latex_options = c("repeat_header"), font_size = 10)
-
 ```
 
 ### Action Type Frequency Table
