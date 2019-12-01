@@ -7,20 +7,16 @@ author:
 date: |
   Master of Science in Data Science, Southern Methodist University, USA
 lang: en-US
-#documentclass: report
 figsintext: true
-numbersections: true
+numbersections: false
 encoding: UTF-8
-bibliography: references.bib
-biblio-style: apalike
 geometry: margin=2cm
 output:
-  bookdown::pdf_document2:
-     citation_package: natbib
+  bookdown::pdf_book:
      keep_tex: true
      toc: true
-editor_options: 
-  chunk_output_type: console
+header-includes:
+ \usepackage{float}
 ---
 \newpage
 ```{r, Setup and Loading Packages, echo=F, include=F, warning=F}
