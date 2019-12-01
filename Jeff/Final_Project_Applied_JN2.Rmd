@@ -773,6 +773,7 @@ plot(perf, main = " Logisitic Regression
 plot(experf, main = "Logisitic Regression 
      ROC Curve - External CV")
 par(mfrow=c(1,1))
+
 ```
 
 ### Fitted Logistic Regression Model
